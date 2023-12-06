@@ -20,7 +20,7 @@ struct SearchParams {
 }
 
 async fn search(Query(params): Query<SearchParams>) -> Html<String> {
-    println!("{:?}", params);
+    println!("/search: {:?}", params);
     let result = params
         .search
         .split(',')
