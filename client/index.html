@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/htmx.org@1.9.9"></script>
+  </head>
+  <body>
+    <form hx-get="/search" hx-target="#search-results">
+      <input type="text" name="search" placeholder="Search..."/>
+    </form>
+    <ul id="search-results"></ul>
+  </body>
+</html>
