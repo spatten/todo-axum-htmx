@@ -5,7 +5,7 @@ use tower_http::services::{ServeDir, ServeFile};
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
-    let serve_dir = ServeDir::new("client").not_found_service(ServeFile::new("assets/index.html"));
+    let serve_dir = ServeDir::new("client").not_found_service(ServeFile::new("client/404.html"));
     let app = Router::new()
         .route("/search", get(search))
         .fallback_service(serve_dir);
