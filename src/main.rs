@@ -35,7 +35,7 @@ async fn main() {
     // Also, add our postgres pool to the state so that our routes can use it
     let app = Router::new()
         .route("/todos", get(list_todos).post(create_todo))
-        .route("/todo/:id", put(update_todo))
+        .route("/todo/:id", put(update_todo).delete(delete_todo))
         .fallback_service(serve_dir)
         .with_state(pool);
 
@@ -84,7 +84,7 @@ impl Todo {
             <li>
               <input type="checkbox" id="todo-{id}" {checked} name="done" hx-put="/todo/{id}">
               <label for="todo-{id}">{}</label>
-              <span hx-delete="/todo/{id}">delete</span>
+              <span hx-delete="/todo/{id}" hx-target="closest li" hx-swap="delete">delete</span>
             </li>"#,
             self.description,
         )
@@ -137,7 +137,7 @@ async fn create_todo(
 
 #[derive(Debug, Deserialize)]
 struct TodoUpdateParams {
-    done: String,
+    done: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -172,7 +172,7 @@ async fn update_todo(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     println!("todo id: {todo_id}");
     println!("form: {:?}", params);
-    let check_box: CheckBox = params.done.into();
+    let check_box: CheckBox = params.done.unwrap_or(String::from("Off")).into();
     let check_box: bool = check_box.into();
     println!("checkbox: {:?}", check_box);
 
@@ -187,4 +187,17 @@ async fn update_todo(
     .map_err(internal_error)?;
     let todo: String = sql_result.to_li();
     Ok(Html(todo))
+}
+
+async fn delete_todo(
+    Path(todo_id): Path<i32>,
+    State(pool): State<PgPool>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    println!("todo id: {todo_id}");
+
+    sqlx::query!("DELETE FROM todos where id = $1", todo_id)
+        .execute(&pool)
+        .await
+        .map_err(internal_error)?;
+    Ok(Html(""))
 }
