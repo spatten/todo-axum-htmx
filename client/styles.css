@@ -1,3 +1,24 @@
 h1 {
   color: rgb(255, 89, 0);
 }
+
+body {
+  padding: 0 2em 0 2em;
+}
+
+#todos {
+  list-style-type: none;
+  padding: 0;
+}
+
+#todos li span.delete{
+  visibility: hidden;
+  color: rgb(140, 40, 40);
+  font-family: sans-serif;
+  font-size: 0.8em;
+}
+
+#todos li:hover span.delete {
+  visibility: visible;
+  cursor: pointer;
+}
