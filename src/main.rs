@@ -1,4 +1,5 @@
 use axum::{extract::State, http::StatusCode, response::Html, routing::get, Router};
+use indoc::formatdoc;
 use listenfd::ListenFd;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::fmt::Display;
@@ -78,9 +79,14 @@ impl Display for Todo {
 impl Todo {
     fn to_li(&self) -> String {
         let checked = if self.done { "checked=checked" } else { "" };
-        format!(
-            r#"<li><input type="checkbox" id="todo-{}" {}><label for="todo-{}">{}</label></li>"#,
-            self.id, checked, self.id, self.description
+        let id = format!("todo-{}", self.id);
+        formatdoc!(
+            r#"
+            <li>
+              <input type="checkbox" id="{id}" {checked}>
+              <label for="{id}">{}</label>
+            </li>"#,
+            self.description
         )
     }
 }

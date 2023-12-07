@@ -14,3 +14,4 @@ tower = { version = "0.4", features = ["util"] }
 listenfd = "1.0.1"
 tower-http = { version = "0.5.0", features = ["fs", "trace"] }
 sqlx = { version = "0.7.3", features = ["migrate", "postgres", "time", "macros", "runtime-tokio"] }
+indoc = "2.0.4"
