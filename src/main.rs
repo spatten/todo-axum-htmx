@@ -17,13 +17,22 @@ async fn main() {
 
     // Auto-reload if you use `make watch`: https://github.com/tokio-rs/axum/blob/main/examples/auto-reload/src/main.rs
     let mut listenfd = ListenFd::from_env();
-    let listener = match listenfd.take_tcp_listener(0).unwrap() {
+    let listener = match listenfd
+        .take_tcp_listener(0)
+        .expect("should be able to find an existing listener")
+    {
         // if we are given a tcp listener on listen fd 0, we use that one
-        Some(listener) => TcpListener::from_std(listener).unwrap(),
+        Some(listener) => {
+            TcpListener::from_std(listener).expect("should be able to listen to existing listener")
+        }
         // otherwise fall back to local listening
-        None => TcpListener::bind("127.0.0.1:3000").await.unwrap(),
+        None => TcpListener::bind("127.0.0.1:3000")
+            .await
+            .expect("should be able to bind to 3000"),
     };
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .await
+        .expect("should be able to serve");
 }
 
 #[derive(Debug, Deserialize)]
