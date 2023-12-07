@@ -13,6 +13,10 @@ create the DB:
 
 sqlx database create
 
+Run the migrations:
+
+sqlx migrate run
+
 To create a new migration:
 
 sqlx migrate add <migration name>
