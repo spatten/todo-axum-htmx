@@ -82,7 +82,7 @@ impl Todo {
         formatdoc!(
             r#"
             <li>
-              <span class="delete" hx-delete="/todo/{id}" hx-target="closest li" hx-swap="delete">X</span>
+              <span class="delete" hx-delete="/todo/{id}" hx-target="closest li" hx-swap="delete">&#10060;</span>
               <input type="checkbox" id="todo-{id}" {checked} name="done" hx-put="/todo/{id}">
               <label for="todo-{id}">{}</label>
             </li>"#,
