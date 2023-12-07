@@ -2,7 +2,6 @@ use axum::{extract::State, http::StatusCode, response::Html, routing::get, Route
 use indoc::formatdoc;
 use listenfd::ListenFd;
 use sqlx::{postgres::PgPoolOptions, PgPool};
-use std::fmt::Display;
 use tokio::net::TcpListener;
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -68,12 +67,6 @@ struct Todo {
     id: i64,
     done: bool,
     description: String,
-}
-
-impl Display for Todo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}: {:?}", self.done, self.description)
-    }
 }
 
 impl Todo {
