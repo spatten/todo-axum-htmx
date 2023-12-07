@@ -5,7 +5,7 @@ body {
 
 #create-todo {
   padding: .75em;
-  margin: 1em;
+  margin: 2em 1em 1em 1em;
   width: 40%;
   font-size: 1.2em;
 }

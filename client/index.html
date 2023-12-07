@@ -6,9 +6,8 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <h1>Testing HTMX</h1>
     <form hx-post="/todos" hx-swap="none" id="create-todo-form">
-      <input id="create-todo" type="text" name="description" placeholder="Type your todo here!"/>
+      <input id="create-todo" type="text" name="description" placeholder="Type your todo here and hit return!"/>
     </form>
     <ul id="todos" hx-trigger="load" hx-get="/todos"></ul>
   </body>
