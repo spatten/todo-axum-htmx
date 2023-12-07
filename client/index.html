@@ -7,10 +7,9 @@
   </head>
   <body>
     <h1>Testing HTMX</h1>
-    <ul id="todos" hx-trigger="load" hx-get="/todos"></ul>
     <form hx-post="/todos" hx-swap="none" id="create-todo-form">
-      <input type="text" name="description"/>
-      <button>Create Todo</button>
+      <input id="create-todo" type="text" name="description" placeholder="Type your todo here!"/>
     </form>
+    <ul id="todos" hx-trigger="load" hx-get="/todos"></ul>
   </body>
 </html>

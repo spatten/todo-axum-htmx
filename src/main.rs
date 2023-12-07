@@ -94,7 +94,7 @@ impl Todo {
 async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
     let sql_result = sqlx::query_as!(
         Todo,
-        "select id, done, description from todos ORDER BY id asc"
+        "select id, done, description from todos ORDER BY id desc"
     )
     .fetch_all(&pool)
     .await
@@ -125,7 +125,7 @@ async fn create_todo(
     let todo: String = sql_result.to_li();
     let wrapped = formatdoc!(
         r#"
-    <div hx-swap-oob="beforeend:#todos">
+    <div hx-swap-oob="afterbegin:#todos">
       {todo}
     </div>
     "#

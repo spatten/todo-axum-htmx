@@ -1,9 +1,11 @@
-h1 {
-  color: rgb(255, 89, 0);
-}
-
 body {
   padding: 0 2em 0 2em;
+  /* font-family: sans-serif; */
+}
+
+#create-todo {
+  padding: 0.5em;
+  margin: 1em;
 }
 
 #todos {
@@ -11,7 +13,17 @@ body {
   padding: 0;
 }
 
-#todos li span.delete{
+#todos li {
+  padding-bottom: 0.5em;
+  font-size: 1.25em;
+}
+
+#todos li input {
+  position: relative;
+  top: -1px;
+}
+
+#todos li span.delete {
   visibility: hidden;
   color: rgb(140, 40, 40);
   font-family: sans-serif;
