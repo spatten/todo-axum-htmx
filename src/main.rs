@@ -1,8 +1,5 @@
-use axum::{
-    extract::Query, extract::State, http::StatusCode, response::Html, routing::get, Router,
-};
+use axum::{extract::State, http::StatusCode, response::Html, routing::get, Router};
 use listenfd::ListenFd;
-use serde::Deserialize;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::fmt::Display;
 use tokio::net::TcpListener;
@@ -58,16 +55,11 @@ async fn main() {
 
 /// Utility function for mapping any error into a `500 Internal Server Error`
 /// response.
-// fn internal_error<E>(err: E) -> (StatusCode, String)
-// where
-//     E: std::error::Error,
-// {
-//     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-// }
-
-#[derive(Debug, Deserialize)]
-struct SearchParams {
-    search: String,
+fn internal_error<E>(err: E) -> (StatusCode, String)
+where
+    E: std::error::Error,
+{
+    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -97,8 +89,7 @@ async fn todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, 
     let sql_result = sqlx::query_as!(Todo, "select id, done, description from todos")
         .fetch_all(&pool)
         .await
-        .expect("should be able to query");
-    // .map_err(internal_error)?;
+        .map_err(internal_error)?;
     let todos: Vec<String> = sql_result.iter().map(|t| t.to_li()).collect::<Vec<_>>();
     println!("todos: {:?}", todos);
 
