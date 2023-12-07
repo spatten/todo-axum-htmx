@@ -2,12 +2,13 @@
 <html>
   <head>
     <script src="htmx.min.js"></script>
+    <script src="myscript.js" defer></script>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <h1>Testing HTMX</h1>
     <ul id="todos" hx-trigger="load" hx-get="/todos"></ul>
-    <form hx-post="/todos" hx-swap="none">
+    <form hx-post="/todos" hx-swap="none" id="create-todo-form">
       <input type="text" name="description"/>
       <button>Create Todo</button>
     </form>

@@ -1,7 +1,7 @@
 use axum::{
     extract::{Form, State},
-    http::StatusCode,
-    response::Html,
+    http::{HeaderMap, StatusCode},
+    response::{Html, IntoResponse},
     routing::get,
     Router,
 };
@@ -109,7 +109,7 @@ struct TodoCreateParams {
 async fn create_todo(
     State(pool): State<PgPool>,
     Form(params): Form<TodoCreateParams>,
-) -> Result<Html<String>, (StatusCode, String)> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     let sql_result = sqlx::query_as!(
         Todo,
         "INSERT INTO todos (description) VALUES ($1) returning id, done, description",
@@ -126,5 +126,7 @@ async fn create_todo(
     </div>
     "#
     );
-    Ok(Html(wrapped))
+    let mut headers = HeaderMap::new();
+    headers.insert("HX-Trigger", "todoFormReset".parse().unwrap());
+    Ok((headers, Html(wrapped)))
 }
