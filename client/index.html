@@ -6,9 +6,6 @@
   </head>
   <body>
     <h1>Testing HTMX</h1>
-    <form hx-get="/search" hx-target="#search-results">
-      <input type="text" name="search" placeholder="Search..."/>
-    </form>
-    <ul id="search-results"></ul>
+    <ul id="todos" hx-trigger="load" hx-get="/todos"></ul>
   </body>
 </html>

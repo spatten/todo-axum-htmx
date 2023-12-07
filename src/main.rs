@@ -4,6 +4,7 @@ use axum::{
 use listenfd::ListenFd;
 use serde::Deserialize;
 use sqlx::{postgres::PgPoolOptions, PgPool};
+use std::fmt::Display;
 use tokio::net::TcpListener;
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -31,7 +32,7 @@ async fn main() {
     // Respond to GET /search, otherwise attempt to serve the file from the client directory
     // Also, add our postgres pool to the state so that our routes can use it
     let app = Router::new()
-        .route("/search", get(search))
+        .route("/todos", get(todos))
         .fallback_service(serve_dir)
         .with_state(pool);
 
@@ -57,37 +58,50 @@ async fn main() {
 
 /// Utility function for mapping any error into a `500 Internal Server Error`
 /// response.
-fn internal_error<E>(err: E) -> (StatusCode, String)
-where
-    E: std::error::Error,
-{
-    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-}
+// fn internal_error<E>(err: E) -> (StatusCode, String)
+// where
+//     E: std::error::Error,
+// {
+//     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+// }
 
 #[derive(Debug, Deserialize)]
 struct SearchParams {
     search: String,
 }
 
-async fn search(
-    Query(params): Query<SearchParams>,
-    State(pool): State<PgPool>,
-) -> Result<Html<String>, (StatusCode, String)> {
-    println!("/search: {:?}", params);
-    let mut results: Vec<String> = params.search.split(',').map(|s| s.to_string()).collect();
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Todo {
+    id: i64,
+    done: bool,
+    description: String,
+}
 
-    let sql_result: String = sqlx::query_scalar("select 'hello world from pg'")
-        .fetch_one(&pool)
+impl Display for Todo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {:?}", self.done, self.description)
+    }
+}
+
+impl Todo {
+    fn to_li(&self) -> String {
+        let checked = if self.done { "checked=checked" } else { "" };
+        format!(
+            r#"<li><input type="checkbox" id="todo-{}" {}><label for="todo-{}">{}</label></li>"#,
+            self.id, checked, self.id, self.description
+        )
+    }
+}
+
+async fn todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
+    let sql_result = sqlx::query_as!(Todo, "select id, done, description from todos")
+        .fetch_all(&pool)
         .await
-        .map_err(internal_error)?;
-    println!("sql_result: {sql_result}");
-    results.push(sql_result);
-    println!("results: {:?}", results);
+        .expect("should be able to query");
+    // .map_err(internal_error)?;
+    let todos: Vec<String> = sql_result.iter().map(|t| t.to_li()).collect::<Vec<_>>();
+    println!("todos: {:?}", todos);
 
-    let result = results
-        .iter()
-        .map(|s| format!("<li>{s}</li>"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let result: String = todos.join("\n");
     Ok(Html(result))
 }
