@@ -1,11 +1,27 @@
 use axum::{extract::Query, response::Html, routing::get, Router};
 use listenfd::ListenFd;
 use serde::Deserialize;
+use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::services::{ServeDir, ServeFile};
 
 #[tokio::main]
 async fn main() {
+    // Connect to postgres
+
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect("postgres://localhost/todo-axum-htmx")
+        .await
+        .expect("should be able to connect to DB");
+    let row: (i64,) = sqlx::query_as("SELECT $1")
+        .bind(150_i64)
+        .fetch_one(&pool)
+        .await
+        .expect("should be able to make a query");
+
+    assert_eq!(row.0, 150);
+
     tracing_subscriber::fmt::init();
     // Serve files from the client directory, falling back to client/404.html
     let serve_dir = ServeDir::new("client").not_found_service(ServeFile::new("client/404.html"));
