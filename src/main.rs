@@ -1,6 +1,13 @@
-use axum::{extract::State, http::StatusCode, response::Html, routing::get, Router};
+use axum::{
+    extract::{Form, State},
+    http::StatusCode,
+    response::Html,
+    routing::get,
+    Router,
+};
 use indoc::formatdoc;
 use listenfd::ListenFd;
+use serde::Deserialize;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tokio::net::TcpListener;
 use tower_http::services::{ServeDir, ServeFile};
@@ -8,7 +15,6 @@ use tower_http::services::{ServeDir, ServeFile};
 #[tokio::main]
 async fn main() {
     // Connect to postgres
-
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect("postgres://localhost/todo-axum-htmx")
@@ -19,7 +25,6 @@ async fn main() {
         .fetch_one(&pool)
         .await
         .expect("should be able to make a query");
-
     assert_eq!(row.0, 150);
 
     tracing_subscriber::fmt::init();
@@ -29,7 +34,7 @@ async fn main() {
     // Respond to GET /search, otherwise attempt to serve the file from the client directory
     // Also, add our postgres pool to the state so that our routes can use it
     let app = Router::new()
-        .route("/todos", get(todos))
+        .route("/todos", get(list_todos).post(create_todo))
         .fallback_service(serve_dir)
         .with_state(pool);
 
@@ -84,7 +89,7 @@ impl Todo {
     }
 }
 
-async fn todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
+async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
     let sql_result = sqlx::query_as!(Todo, "select id, done, description from todos")
         .fetch_all(&pool)
         .await
@@ -94,4 +99,32 @@ async fn todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, 
 
     let result: String = todos.join("\n");
     Ok(Html(result))
+}
+
+#[derive(Deserialize)]
+struct TodoCreateParams {
+    description: String,
+}
+
+async fn create_todo(
+    State(pool): State<PgPool>,
+    Form(params): Form<TodoCreateParams>,
+) -> Result<Html<String>, (StatusCode, String)> {
+    let sql_result = sqlx::query_as!(
+        Todo,
+        "INSERT INTO todos (description) VALUES ($1) returning id, done, description",
+        params.description,
+    )
+    .fetch_one(&pool)
+    .await
+    .map_err(internal_error)?;
+    let todo: String = sql_result.to_li();
+    let wrapped = formatdoc!(
+        r#"
+    <div hx-swap-oob="beforeend:#todos">
+      {todo}
+    </div>
+    "#
+    );
+    Ok(Html(wrapped))
 }
