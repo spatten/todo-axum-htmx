@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Form, State},
+    extract::{Form, Path, State},
     http::{HeaderMap, StatusCode},
     response::{Html, IntoResponse},
-    routing::get,
+    routing::{get, put},
     Router,
 };
 use indoc::formatdoc;
@@ -35,6 +35,7 @@ async fn main() {
     // Also, add our postgres pool to the state so that our routes can use it
     let app = Router::new()
         .route("/todos", get(list_todos).post(create_todo))
+        .route("/todo/:id", put(update_todo))
         .fallback_service(serve_dir)
         .with_state(pool);
 
@@ -77,25 +78,28 @@ struct Todo {
 impl Todo {
     fn to_li(&self) -> String {
         let checked = if self.done { "checked=checked" } else { "" };
-        let id = format!("todo-{}", self.id);
+        let id = self.id;
         formatdoc!(
             r#"
             <li>
-              <input type="checkbox" id="{id}" {checked}>
-              <label for="{id}">{}</label>
+              <input type="checkbox" id="todo-{id}" {checked} name="done" hx-put="/todo/{id}">
+              <label for="todo-{id}">{}</label>
+              <span hx-delete="/todo/{id}">delete</span>
             </li>"#,
-            self.description
+            self.description,
         )
     }
 }
 
 async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
-    let sql_result = sqlx::query_as!(Todo, "select id, done, description from todos")
-        .fetch_all(&pool)
-        .await
-        .map_err(internal_error)?;
+    let sql_result = sqlx::query_as!(
+        Todo,
+        "select id, done, description from todos ORDER BY id asc"
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(internal_error)?;
     let todos: Vec<String> = sql_result.iter().map(|t| t.to_li()).collect::<Vec<_>>();
-    println!("todos: {:?}", todos);
 
     let result: String = todos.join("\n");
     Ok(Html(result))
@@ -129,4 +133,58 @@ async fn create_todo(
     let mut headers = HeaderMap::new();
     headers.insert("HX-Trigger", "todoFormReset".parse().unwrap());
     Ok((headers, Html(wrapped)))
+}
+
+#[derive(Debug, Deserialize)]
+struct TodoUpdateParams {
+    done: String,
+}
+
+#[derive(Debug, Deserialize)]
+enum CheckBox {
+    On,
+    Off,
+}
+
+impl From<CheckBox> for bool {
+    fn from(val: CheckBox) -> Self {
+        match val {
+            CheckBox::On => true,
+            CheckBox::Off => false,
+        }
+    }
+}
+
+impl From<String> for CheckBox {
+    fn from(val: String) -> Self {
+        if val == "on" {
+            CheckBox::On
+        } else {
+            CheckBox::Off
+        }
+    }
+}
+
+async fn update_todo(
+    Path(todo_id): Path<i32>,
+    State(pool): State<PgPool>,
+    Form(params): Form<TodoUpdateParams>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    println!("todo id: {todo_id}");
+    println!("form: {:?}", params);
+    let check_box: CheckBox = params.done.into();
+    let check_box: bool = check_box.into();
+    println!("checkbox: {:?}", check_box);
+
+    let sql_result = sqlx::query_as!(
+        Todo,
+        "UPDATE todos set done = $1 where id = $2 RETURNING id, done, description",
+        check_box,
+        todo_id,
+    )
+    .fetch_one(&pool)
+    .await
+    .map_err(internal_error)?;
+    let todo: String = sql_result.to_li();
+    Ok(Html(todo))
 }
