@@ -2,7 +2,7 @@ use axum::{
     extract::{Form, Path, State},
     http::{HeaderMap, StatusCode},
     response::{Html, IntoResponse},
-    routing::{get, put},
+    routing::{get, post, put},
     Router,
 };
 use indoc::formatdoc;
@@ -36,6 +36,7 @@ async fn main() {
     let app = Router::new()
         .route("/todos", get(list_todos).post(create_todo))
         .route("/todo/:id", put(update_todo).delete(delete_todo))
+        .route("/todos/ordering", post(update_order))
         .fallback_service(serve_dir)
         .with_state(pool);
 
@@ -80,29 +81,62 @@ impl Todo {
         let checked = if self.done { "checked=checked" } else { "" };
         let id = self.id;
         formatdoc!(
-            r#"
+            r##"
             <li>
               <span class="delete" hx-delete="/todo/{id}" hx-target="closest li" hx-swap="delete">&#10060;</span>
-              <input type="checkbox" id="todo-{id}" {checked} name="done" hx-put="/todo/{id}">
-              <label for="todo-{id}">{}</label>
-            </li>"#,
+              <input type="checkbox" id="todo-{id}-checkbox" {checked} name="done" hx-put="/todo/{id}" hx-include="#todo-{id}-checkbox input[name=done]">
+              <label for="todo-{id}-checkbox">{}</label>
+              <input type='hidden' name='order' value='{id}'/>
+            </li>"##,
             self.description,
         )
     }
 }
 
+fn todos_ul(todos: Vec<Todo>) -> String {
+    formatdoc!(
+        r#"
+        <ul id="todos" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
+            {}
+        </form>
+    "#,
+        todos
+            .iter()
+            .map(|t| t.to_li())
+            .collect::<Vec<_>>()
+            .join("\n")
+    )
+}
 async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
-    let sql_result = sqlx::query_as!(
+    let todos = sqlx::query_as!(
         Todo,
         "select id, done, description from todos ORDER BY id desc"
     )
     .fetch_all(&pool)
     .await
     .map_err(internal_error)?;
-    let todos: Vec<String> = sql_result.iter().map(|t| t.to_li()).collect::<Vec<_>>();
+    let ul = todos_ul(todos);
+    Ok(Html(ul))
+}
 
-    let result: String = todos.join("\n");
-    Ok(Html(result))
+#[derive(Deserialize)]
+struct TodoOrderingParams {
+    order: String,
+}
+
+async fn update_order(
+    State(pool): State<PgPool>,
+    Form(params): Form<TodoOrderingParams>,
+) -> Result<Html<String>, (StatusCode, String)> {
+    let todos = sqlx::query_as!(
+        Todo,
+        "select id, done, description from todos ORDER BY id desc"
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(internal_error)?;
+    let ul = todos_ul(todos);
+    Ok(Html(ul))
 }
 
 #[derive(Deserialize)]
