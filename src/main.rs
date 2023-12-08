@@ -10,7 +10,10 @@ use listenfd::ListenFd;
 use serde::Deserialize;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tokio::net::TcpListener;
-use tower_http::services::{ServeDir, ServeFile};
+use tower_http::{
+    services::{ServeDir, ServeFile},
+    trace::TraceLayer,
+};
 
 #[tokio::main]
 async fn main() {
@@ -27,7 +30,10 @@ async fn main() {
         .expect("should be able to make a query");
     assert_eq!(row.0, 150);
 
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+
     // Serve files from the client directory, falling back to client/404.html
     let serve_dir = ServeDir::new("client").not_found_service(ServeFile::new("client/404.html"));
 
@@ -38,6 +44,7 @@ async fn main() {
         .route("/todo/:id", put(update_todo).delete(delete_todo))
         .route("/todos/ordering", post(update_order))
         .fallback_service(serve_dir)
+        .layer(TraceLayer::new_for_http())
         .with_state(pool);
 
     // Auto-reload if you use `make watch`: https://github.com/tokio-rs/axum/blob/main/examples/auto-reload/src/main.rs
