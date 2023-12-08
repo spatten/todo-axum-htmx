@@ -77,11 +77,12 @@ where
     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 struct Todo {
     id: i64,
     done: bool,
     description: String,
+    position: f32,
 }
 
 impl Todo {
@@ -118,7 +119,7 @@ fn todos_ul(todos: Vec<Todo>) -> String {
 async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
     let todos = sqlx::query_as!(
         Todo,
-        "select id, done, description from todos ORDER BY id desc"
+        "select id, done, description, position from todos ORDER BY id desc"
     )
     .fetch_all(&pool)
     .await
@@ -139,7 +140,7 @@ async fn update_order(
     println!("order params: {:?}", params.order);
     let todos = sqlx::query_as!(
         Todo,
-        "select id, done, description from todos ORDER BY id desc"
+        "select id, done, description, position from todos ORDER BY id desc"
     )
     .fetch_all(&pool)
     .await
@@ -159,7 +160,7 @@ async fn create_todo(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let sql_result = sqlx::query_as!(
         Todo,
-        "INSERT INTO todos (description) VALUES ($1) returning id, done, description",
+        "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1)) returning id, done, description, position;",
         params.description,
     )
     .fetch_one(&pool)
@@ -221,7 +222,7 @@ async fn update_todo(
 
     let sql_result = sqlx::query_as!(
         Todo,
-        "UPDATE todos set done = $1 where id = $2 RETURNING id, done, description",
+        "UPDATE todos set done = $1 where id = $2 RETURNING id, done, description, position",
         check_box,
         todo_id,
     )
