@@ -20,6 +20,7 @@ htmx.onLoad(function () {
 
   // Re-enable sorting on the `htmx:afterSwap` event
   sortable.addEventListener("htmx:afterSwap", function () {
+    console.log("re-enabling sort")
     sortableInstance.option("disabled", false);
   });
 })

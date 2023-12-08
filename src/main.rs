@@ -161,7 +161,11 @@ async fn update_order(
     let mut todos = try_join_all(queries).await.map_err(internal_error)?;
     todos.sort_by(|a, b| b.position.cmp(&a.position));
     tx.commit().await.map_err(internal_error)?;
-    let ul = todos_ul(todos);
+    let ul = todos
+        .iter()
+        .map(|t| t.to_li())
+        .collect::<Vec<_>>()
+        .join("\n");
     Ok(Html(ul))
 }
 
