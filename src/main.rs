@@ -1,10 +1,11 @@
 use axum::{
-    extract::{Form, Path, State},
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::{Html, IntoResponse},
     routing::{get, post, put},
     Router,
 };
+use axum_extra::extract::Form;
 use indoc::formatdoc;
 use listenfd::ListenFd;
 use serde::Deserialize;
@@ -128,13 +129,14 @@ async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusC
 
 #[derive(Deserialize)]
 struct TodoOrderingParams {
-    order: String,
+    order: Vec<String>,
 }
 
 async fn update_order(
     State(pool): State<PgPool>,
     Form(params): Form<TodoOrderingParams>,
 ) -> Result<Html<String>, (StatusCode, String)> {
+    println!("order params: {:?}", params.order);
     let todos = sqlx::query_as!(
         Todo,
         "select id, done, description from todos ORDER BY id desc"
