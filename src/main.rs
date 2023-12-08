@@ -6,6 +6,7 @@ use axum::{
     Router,
 };
 use axum_extra::extract::Form;
+use futures::future::{join_all, try_join_all};
 use indoc::formatdoc;
 use listenfd::ListenFd;
 use serde::Deserialize;
@@ -82,7 +83,7 @@ struct Todo {
     id: i64,
     done: bool,
     description: String,
-    position: f32,
+    position: i64,
 }
 
 impl Todo {
@@ -119,7 +120,7 @@ fn todos_ul(todos: Vec<Todo>) -> String {
 async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
     let todos = sqlx::query_as!(
         Todo,
-        "select id, done, description, position from todos ORDER BY id desc"
+        "select id, done, description, position from todos ORDER BY position desc"
     )
     .fetch_all(&pool)
     .await
@@ -138,13 +139,28 @@ async fn update_order(
     Form(params): Form<TodoOrderingParams>,
 ) -> Result<Html<String>, (StatusCode, String)> {
     println!("order params: {:?}", params.order);
-    let todos = sqlx::query_as!(
+    let positions: Vec<(i32, i32)> = params
+        .order
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(pos, id)| (pos as i32, id.parse().unwrap_or(0)))
+        .collect::<Vec<_>>();
+    let tx = pool.begin().await.map_err(internal_error)?;
+
+    let queries = positions.iter().map(|(position, id)| async {
+        sqlx::query_as!(
         Todo,
-        "select id, done, description, position from todos ORDER BY id desc"
-    )
-    .fetch_all(&pool)
-    .await
-    .map_err(internal_error)?;
+        "update todos set position = $1 where id = $2 RETURNING id, position, description, done;",
+        position.clone(),
+        id.clone()
+      )
+        .fetch_one(&pool)
+        .await
+    });
+    let mut todos = try_join_all(queries).await.map_err(internal_error)?;
+    todos.sort_by(|a, b| b.position.cmp(&a.position));
+    tx.commit().await.map_err(internal_error)?;
     let ul = todos_ul(todos);
     Ok(Html(ul))
 }
