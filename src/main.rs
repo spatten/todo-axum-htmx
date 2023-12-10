@@ -6,7 +6,7 @@ use axum::{
     Router,
 };
 use axum_extra::extract::Form;
-use futures::future::{join_all, try_join_all};
+use futures::future::try_join_all;
 use indoc::formatdoc;
 use listenfd::ListenFd;
 use serde::Deserialize;
@@ -94,7 +94,7 @@ impl Todo {
             r##"
             <li>
               <span class="delete" hx-delete="/todo/{id}" hx-target="closest li" hx-swap="delete">&#10060;</span>
-              <input type="checkbox" id="todo-{id}-checkbox" {checked} name="done" hx-put="/todo/{id}" hx-include="#todo-{id}-checkbox input[name=done]">
+              <input type="checkbox" id="todo-{id}-checkbox" {checked} name="done" hx-put="/todo/{id}" hx-swap="none" hx-include="this">
               <label for="todo-{id}-checkbox">{}</label>
               <input type='hidden' name='order' value='{id}'/>
             </li>"##,
@@ -106,7 +106,7 @@ impl Todo {
 fn todos_ul(todos: Vec<Todo>) -> String {
     formatdoc!(
         r#"
-        <ul id="todos" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
+        <ul id="todos" hx-post="todos/ordering" hx-swap="this" hx-trigger="drop-end" hx-include="[name=order]">
             {}
         </form>
     "#,
@@ -240,17 +240,16 @@ async fn update_todo(
     let check_box: bool = check_box.into();
     println!("checkbox: {:?}", check_box);
 
-    let sql_result = sqlx::query_as!(
+    sqlx::query_as!(
         Todo,
-        "UPDATE todos set done = $1 where id = $2 RETURNING id, done, description, position",
+        "UPDATE todos set done = $1 where id = $2",
         check_box,
         todo_id,
     )
-    .fetch_one(&pool)
+    .execute(&pool)
     .await
     .map_err(internal_error)?;
-    let todo: String = sql_result.to_li();
-    Ok(Html(todo))
+    Ok(StatusCode::OK)
 }
 
 async fn delete_todo(
