@@ -7,10 +7,12 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <form hx-post="/todos" hx-swap="none" id="create-todo-form">
+    <form hx-post="/todos" id="create-todo-form" hx-swap="innerHTML" hx-target="#todos">
       <input id="create-todo" type="text" name="description" placeholder="Type your todo here and hit return!"/>
     </form>
     <div id="todos-container" hx-trigger="load" hx-get="/todos" >
+      <ul id="todos" class="sortable" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
+      </ul>
     </div>
   </body>
 </html>

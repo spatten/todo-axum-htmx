@@ -46,20 +46,42 @@ pub struct TodoCreateParams {
     description: String,
 }
 
+async fn render_all_todos(
+    pool: PgPool,
+) -> Result<templates::TodosInnerTemplate, (StatusCode, String)> {
+    let todos = sqlx::query_as!(
+        Todo,
+        "select id, done, description, position from todos ORDER BY position desc"
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(internal_error)?;
+
+    Ok(render_todos(todos))
+}
+
+fn render_todos(todos: Vec<Todo>) -> templates::TodosInnerTemplate {
+    let todos: Vec<templates::TodoLiTemplate> =
+        todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+    templates::TodosInnerTemplate {
+        todos, // todos: templates::TodosInnerTemplate { todos },
+    }
+}
+
 pub async fn create(
     State(pool): State<PgPool>,
     Form(params): Form<TodoCreateParams>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let todo = sqlx::query_as!(
-        Todo,
-        "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1)) returning id, done, description, position;",
+    sqlx::query!(
+        "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1));",
         params.description,
     )
-    .fetch_one(&pool)
+    .execute(&pool)
     .await
     .map_err(internal_error)?;
-    let todo: templates::TodoLiTemplate = todo.into();
-    let template = templates::TodoSwapOOBTemplate { todo };
+
+    let template = render_all_todos(pool).await?;
+
     let mut headers = HeaderMap::new();
     headers.insert(
         "HX-Trigger",
@@ -71,17 +93,9 @@ pub async fn create(
 }
 
 pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let todos = sqlx::query_as!(
-        Todo,
-        "select id, done, description, position from todos ORDER BY position desc"
-    )
-    .fetch_all(&pool)
-    .await
-    .map_err(internal_error)?;
-    let todos: Vec<templates::TodoLiTemplate> =
-        todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+    let inner_template = render_all_todos(pool).await?;
     let template = templates::TodosUlTemplate {
-        todos: templates::TodosInnerTemplate { todos },
+        todos: inner_template,
     };
     Ok(HtmlTemplate(template))
 }
@@ -119,9 +133,7 @@ pub async fn update_order(
     todos.sort_by(|a, b| b.position.cmp(&a.position));
     tx.commit().await.map_err(internal_error)?;
 
-    let todos: Vec<templates::TodoLiTemplate> =
-        todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
-    let template = templates::TodosInnerTemplate { todos };
+    let template = render_todos(todos);
     Ok(HtmlTemplate(template))
 }
 
@@ -163,8 +175,7 @@ pub async fn update(
     let check_box: CheckBox = params.done.unwrap_or(String::from("Off")).into();
     let check_box: bool = check_box.into();
 
-    sqlx::query_as!(
-        Todo,
+    sqlx::query!(
         "UPDATE todos set done = $1 where id = $2",
         check_box,
         todo_id,
@@ -172,7 +183,9 @@ pub async fn update(
     .execute(&pool)
     .await
     .map_err(internal_error)?;
-    Ok(StatusCode::OK)
+
+    let template = render_all_todos(pool).await?;
+    Ok(HtmlTemplate(template))
 }
 
 pub async fn delete(
@@ -183,5 +196,7 @@ pub async fn delete(
         .execute(&pool)
         .await
         .map_err(internal_error)?;
-    Ok(StatusCode::OK)
+
+    let template = render_all_todos(pool).await?;
+    Ok(HtmlTemplate(template))
 }
