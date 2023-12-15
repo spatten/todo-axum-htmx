@@ -13,6 +13,7 @@ htmx.onLoad(function () {
     // Disable sorting on the `end` event
     onEnd: function (evt) {
       this.option("disabled", true);
+      htmx.trigger("#todos", "drop-end")
     }
   });
 
