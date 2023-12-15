@@ -12,19 +12,19 @@ impl From<Todo> for TodoLiTemplate {
 }
 
 #[derive(Template)]
-#[template(path = "todos_ul.html", escape = "none")]
+#[template(path = "todos_ul.html")]
 pub struct TodosUlTemplate {
     pub todos: TodosInnerTemplate,
 }
 
 #[derive(Template)]
-#[template(path = "todos_inner.html", escape = "none")]
+#[template(path = "todos_inner.html")]
 pub struct TodosInnerTemplate {
     pub todos: Vec<TodoLiTemplate>,
 }
 
 #[derive(Template)]
-#[template(path = "todo_swap_oob.html", escape = "none")]
+#[template(path = "todo_swap_oob.html")]
 pub struct TodoSwapOOBTemplate {
     pub todo: TodoLiTemplate,
 }
