@@ -61,7 +61,12 @@ pub async fn create(
     let todo: templates::TodoLiTemplate = todo.into();
     let template = templates::TodoSwapOOBTemplate { todo };
     let mut headers = HeaderMap::new();
-    headers.insert("HX-Trigger", "todoFormReset".parse().unwrap());
+    headers.insert(
+        "HX-Trigger",
+        "todoFormReset"
+            .parse()
+            .expect("should be able to create a HX-Trigger header"),
+    );
     Ok((headers, HtmlTemplate(template)))
 }
 
