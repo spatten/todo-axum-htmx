@@ -24,12 +24,6 @@ pub struct TodosInnerTemplate {
 }
 
 #[derive(Template)]
-#[template(path = "todo_swap_oob.html")]
-pub struct TodoSwapOOBTemplate {
-    pub todo: TodoLiTemplate,
-}
-
-#[derive(Template)]
 #[template(path = "todo_li.html")]
 pub struct TodoLiTemplate {
     id: i64,
