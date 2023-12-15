@@ -103,6 +103,14 @@ impl Todo {
     }
 }
 
+fn todos_inner(todos: Vec<Todo>) -> String {
+    todos
+        .iter()
+        .map(|t| t.to_li())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 fn todos_ul(todos: Vec<Todo>) -> String {
     formatdoc!(
         r#"
@@ -110,11 +118,7 @@ fn todos_ul(todos: Vec<Todo>) -> String {
             {}
         </form>
     "#,
-        todos
-            .iter()
-            .map(|t| t.to_li())
-            .collect::<Vec<_>>()
-            .join("\n")
+        todos_inner(todos)
     )
 }
 async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
@@ -150,23 +154,19 @@ async fn update_order(
 
     let queries = positions.iter().map(|(position, id)| async {
         sqlx::query_as!(
-        Todo,
-        "update todos set position = $1 where id = $2 RETURNING id, position, description, done;",
-        position.clone(),
-        id.clone()
-      )
+            Todo,
+            "update todos set position = $1 where id = $2 RETURNING *;",
+            position.clone(),
+            id.clone()
+        )
         .fetch_one(&pool)
         .await
     });
     let mut todos = try_join_all(queries).await.map_err(internal_error)?;
     todos.sort_by(|a, b| b.position.cmp(&a.position));
     tx.commit().await.map_err(internal_error)?;
-    let ul = todos
-        .iter()
-        .map(|t| t.to_li())
-        .collect::<Vec<_>>()
-        .join("\n");
-    Ok(Html(ul))
+    let ul_inner = todos_inner(todos);
+    Ok(Html(ul_inner))
 }
 
 #[derive(Deserialize)]
@@ -262,5 +262,5 @@ async fn delete_todo(
         .execute(&pool)
         .await
         .map_err(internal_error)?;
-    Ok(Html(""))
+    Ok(StatusCode::OK)
 }
