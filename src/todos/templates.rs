@@ -23,6 +23,24 @@ pub struct TodosInnerTemplate {
     pub todos: Vec<TodoLiTemplate>,
 }
 
+impl TodosInnerTemplate {
+    fn done_count(&self) -> usize {
+        self.todos
+            .iter()
+            .filter(|t| t.done)
+            .collect::<Vec<_>>()
+            .len()
+    }
+
+    fn pending_count(&self) -> usize {
+        self.todos
+            .iter()
+            .filter(|t| !t.done)
+            .collect::<Vec<_>>()
+            .len()
+    }
+}
+
 #[derive(Template)]
 #[template(path = "todo_li.html")]
 pub struct TodoLiTemplate {
