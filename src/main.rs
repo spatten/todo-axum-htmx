@@ -40,7 +40,7 @@ async fn main() {
     let app = Router::new()
         .route(
             "/todos",
-            get(todos::responses::list_todos).post(todos::responses::create),
+            get(todos::responses::list).post(todos::responses::create),
         )
         .route(
             "/todo/:id",

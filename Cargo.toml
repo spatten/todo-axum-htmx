@@ -18,4 +18,4 @@ indoc = "2.0.4"
 tracing = "0.1.40"
 axum-extra = { version = "0.9.0", features = ["form"] }
 futures = "0.3.29"
-html-escape = "0.2.13"
+askama = "0.12.1"

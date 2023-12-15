@@ -1,18 +1,36 @@
+use askama::Template;
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
-    response::{Html, IntoResponse},
+    response::{Html, IntoResponse, Response},
 };
 use axum_extra::extract::Form;
 use futures::future::try_join_all;
-use indoc::formatdoc;
 
 use serde::Deserialize;
 use sqlx::PgPool;
 
-use crate::todos::{todos_inner, Todo};
+use crate::todos::Todo;
 
-use super::todos_ul;
+use super::templates;
+
+struct HtmlTemplate<T>(T);
+
+impl<T> IntoResponse for HtmlTemplate<T>
+where
+    T: Template,
+{
+    fn into_response(self) -> Response {
+        match self.0.render() {
+            Ok(html) => Html(html).into_response(),
+            Err(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to render template. Error: {err}"),
+            )
+                .into_response(),
+        }
+    }
+}
 
 /// Utility function for mapping any error into a `500 Internal Server Error`
 /// response.
@@ -32,7 +50,7 @@ pub async fn create(
     State(pool): State<PgPool>,
     Form(params): Form<TodoCreateParams>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let sql_result = sqlx::query_as!(
+    let todo = sqlx::query_as!(
         Todo,
         "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1)) returning id, done, description, position;",
         params.description,
@@ -40,20 +58,14 @@ pub async fn create(
     .fetch_one(&pool)
     .await
     .map_err(internal_error)?;
-    let todo: String = sql_result.to_li();
-    let wrapped = formatdoc!(
-        r#"
-    <div hx-swap-oob="afterbegin:#todos">
-      {todo}
-    </div>
-    "#
-    );
+    let todo: templates::TodoLiTemplate = todo.into();
+    let template = templates::TodoSwapOOBTemplate { todo };
     let mut headers = HeaderMap::new();
     headers.insert("HX-Trigger", "todoFormReset".parse().unwrap());
-    Ok((headers, Html(wrapped)))
+    Ok((headers, HtmlTemplate(template)))
 }
 
-pub async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (StatusCode, String)> {
+pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (StatusCode, String)> {
     let todos = sqlx::query_as!(
         Todo,
         "select id, done, description, position from todos ORDER BY position desc"
@@ -61,8 +73,12 @@ pub async fn list_todos(State(pool): State<PgPool>) -> Result<Html<String>, (Sta
     .fetch_all(&pool)
     .await
     .map_err(internal_error)?;
-    let ul = todos_ul(todos);
-    Ok(Html(ul))
+    let todos: Vec<templates::TodoLiTemplate> =
+        todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+    let template = templates::TodosUlTemplate {
+        todos: templates::TodosInnerTemplate { todos },
+    };
+    Ok(HtmlTemplate(template))
 }
 
 #[derive(Deserialize)]
@@ -73,7 +89,7 @@ pub struct TodoOrderingParams {
 pub async fn update_order(
     State(pool): State<PgPool>,
     Form(params): Form<TodoOrderingParams>,
-) -> Result<Html<String>, (StatusCode, String)> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     println!("order params: {:?}", params.order);
     let positions: Vec<(i32, i32)> = params
         .order
@@ -97,8 +113,11 @@ pub async fn update_order(
     let mut todos = try_join_all(queries).await.map_err(internal_error)?;
     todos.sort_by(|a, b| b.position.cmp(&a.position));
     tx.commit().await.map_err(internal_error)?;
-    let ul_inner = todos_inner(todos);
-    Ok(Html(ul_inner))
+
+    let todos: Vec<templates::TodoLiTemplate> =
+        todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+    let template = templates::TodosInnerTemplate { todos };
+    Ok(HtmlTemplate(template))
 }
 
 #[derive(Debug, Deserialize)]
@@ -136,11 +155,8 @@ pub async fn update(
     State(pool): State<PgPool>,
     Form(params): Form<TodoUpdateParams>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    println!("todo id: {todo_id}");
-    println!("form: {:?}", params);
     let check_box: CheckBox = params.done.unwrap_or(String::from("Off")).into();
     let check_box: bool = check_box.into();
-    println!("checkbox: {:?}", check_box);
 
     sqlx::query_as!(
         Todo,
@@ -158,8 +174,6 @@ pub async fn delete(
     Path(todo_id): Path<i32>,
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    println!("todo id: {todo_id}");
-
     sqlx::query!("DELETE FROM todos where id = $1", todo_id)
         .execute(&pool)
         .await
