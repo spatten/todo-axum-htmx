@@ -98,7 +98,7 @@ impl Todo {
               <label for="todo-{id}-checkbox">{}</label>
               <input type='hidden' name='order' value='{id}'/>
             </li>"##,
-            self.description,
+            html_escape::encode_safe(&self.description),
         )
     }
 }
