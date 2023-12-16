@@ -100,6 +100,13 @@ pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (Stat
     Ok(HtmlTemplate(template))
 }
 
+pub async fn move_complete_to_bottom(
+    State(pool): State<PgPool>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let template = render_all_todos(pool).await?;
+    Ok(HtmlTemplate(template))
+}
+
 #[derive(Deserialize)]
 pub struct TodoOrderingParams {
     order: Vec<String>,

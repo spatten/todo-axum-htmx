@@ -5,12 +5,18 @@
     <script src="myscript.js"></script>
     <script src="Sortable.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <title>TODO In Rust + HTMX</title>
   </head>
   <body>
     <form hx-post="/todos" id="create-todo-form" hx-swap="innerHTML" hx-target="#todos">
       <input id="create-todo" type="text" name="description" placeholder="Type your todo here and hit return!"/>
     </form>
-    <div id="counters"></div>
+    <div id="headers">
+      <div id="counters"></div>
+      <div id="actions">
+        <a hx-post="/todos/move_complete_to_bottom" hx-target="#todos">move done to bottom</a>
+      </div>
+    </div>
     <div id="todos-container" hx-trigger="load" hx-get="/todos" >
       <ul id="todos" class="sortable" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
       </ul>

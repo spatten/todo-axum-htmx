@@ -46,6 +46,10 @@ async fn main() {
             "/todo/:id",
             put(todos::responses::update).delete(todos::responses::delete),
         )
+        .route(
+            "/todos/move_complete_to_bottom",
+            post(todos::responses::move_complete_to_bottom),
+        )
         .route("/todos/ordering", post(todos::responses::update_order))
         .fallback_service(serve_dir)
         .layer(TraceLayer::new_for_http())
