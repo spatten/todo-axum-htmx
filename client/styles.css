@@ -59,3 +59,18 @@ body {
   visibility: visible;
   cursor: pointer;
 }
+
+/* Animations */
+.fade-out.htmx-swapping {
+  opacity: 0;
+  transition: opacity .25s ease-out;
+}
+
+#fade-in.htmx-added {
+  opacity: 0;
+}
+
+.fade-in {
+  opacity: 1;
+  transition: opacity .25s ease-out;
+}

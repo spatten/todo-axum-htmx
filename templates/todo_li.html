@@ -1,5 +1,5 @@
-<li>
-  <span class="delete" hx-delete="/todo/{{ id }}" hx-target="closest li" hx-swap="delete">&#10060;</span>
+<li class="fade-out fade-in">
+  <span class="delete" hx-delete="/todo/{{ id }}" hx-target="closest li" hx-swap="delete swap:.25s">&#10060;</span>
   <input type="checkbox" id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done" hx-put="/todo/{{ id }}" hx-swap="none" hx-include="this">
   <label for="todo-{{ id }}-checkbox">{{ description }}</label>
   <input type='hidden' name='order' value='{{ id }}'/>
