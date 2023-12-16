@@ -3,11 +3,34 @@ body {
   /* font-family: sans-serif; */
 }
 
+#headers {
+  padding-left: 1.25em;
+}
+
+#headers div {
+  display: inline-block;
+  margin-right: 1em;
+}
+
+#headers button {
+  margin-right: 1em;
+  padding: 0.25em 0.5em;
+}
+
+#counters {
+  font-size: 1.15em;
+  color: grey;
+}
+
 #create-todo {
   padding: .75em;
   margin: 2em 1em 1em 1em;
   width: 40%;
   font-size: 1.2em;
+}
+
+#todos-container {
+  margin-top: 1em;
 }
 
 #todos {
