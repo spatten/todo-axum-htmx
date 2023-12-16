@@ -11,37 +11,17 @@ use sqlx::PgPool;
 use crate::utils;
 use crate::{todos::Todo, utils::HtmlTemplate};
 
-use super::templates;
+use super::{db, templates};
 
 #[derive(Deserialize)]
 pub struct TodoCreateParams {
     description: String,
 }
 
-async fn get_todos(pool: &PgPool) -> Result<Vec<Todo>, (StatusCode, String)> {
-    sqlx::query_as!(
-        Todo,
-        "select id, done, description, position from todos ORDER BY position desc"
-    )
-    .fetch_all(pool)
-    .await
-    .map_err(utils::internal_error)
-}
-
-async fn delete_todos(todos: Vec<Todo>, pool: &PgPool) -> Result<(), (StatusCode, String)> {
-    let delete_ids = todos.iter().map(|t| t.id as i32).collect::<Vec<_>>();
-    // https://github.com/launchbadge/sqlx/blob/main/FAQ.md#how-can-i-do-a-select--where-foo-in--query
-    sqlx::query!("delete from todos where id = ANY($1)", &delete_ids)
-        .execute(pool)
-        .await
-        .map_err(utils::internal_error)?;
-    Ok(())
-}
-
 async fn render_all_todos(
     pool: &PgPool,
 ) -> Result<templates::TodosInnerTemplate, (StatusCode, String)> {
-    let todos = get_todos(pool).await?;
+    let todos = db::get_todos(pool).await?;
     Ok(render_todos(todos))
 }
 
@@ -88,7 +68,7 @@ pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (Stat
 pub async fn move_complete_to_bottom(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let mut todos = get_todos(&pool).await?;
+    let mut todos = db::get_todos(&pool).await?;
     todos.sort_by(|a, b| a.position.cmp(&b.position));
     let (mut completed, mut pending): (Vec<_>, Vec<_>) = todos.into_iter().partition(|t| t.done);
     completed.append(&mut pending);
@@ -97,7 +77,7 @@ pub async fn move_complete_to_bottom(
         .enumerate()
         .map(|(position, todo)| (position as i32, todo.id as i32))
         .collect::<Vec<_>>();
-    set_positions(positions, &pool).await?;
+    db::set_positions(positions, &pool).await?;
     let template = render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
 }
@@ -105,11 +85,11 @@ pub async fn move_complete_to_bottom(
 pub async fn delete_completed(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let todos = get_todos(&pool).await?;
+    let todos = db::get_todos(&pool).await?;
     let (completed, pending): (Vec<_>, Vec<_>) = todos.into_iter().partition(|t| t.done);
 
     // Delete the completed ones
-    delete_todos(completed, &pool).await?;
+    db::delete_todos(completed, &pool).await?;
 
     let template = render_todos(pending);
     Ok(HtmlTemplate(template))
@@ -118,34 +98,6 @@ pub async fn delete_completed(
 #[derive(Deserialize)]
 pub struct TodoOrderingParams {
     order: Vec<String>,
-}
-
-// Given a vec of (position, id), set the position for each todo by id
-async fn set_positions(
-    position_data: Vec<(i32, i32)>,
-    pool: &PgPool,
-) -> Result<(), (StatusCode, String)> {
-    let positions = position_data
-        .clone()
-        .into_iter()
-        .map(|(pos, _)| pos)
-        .collect::<Vec<_>>();
-    let ids = position_data
-        .into_iter()
-        .map(|(_, id)| id)
-        .collect::<Vec<_>>();
-    sqlx::query!(
-        "update todos as original
-         set position=new.position
-         from (select unnest($1::int4[]) as position, unnest($2::int4[]) as id) as new
-         where original.id=new.id;",
-        &positions[..],
-        &ids[..],
-    )
-    .execute(pool)
-    .await
-    .map_err(utils::internal_error)?;
-    Ok(())
 }
 
 pub async fn update_order(
@@ -160,7 +112,7 @@ pub async fn update_order(
         .enumerate()
         .map(|(pos, id)| (pos as i32, id.parse().unwrap_or(0)))
         .collect::<Vec<_>>();
-    set_positions(positions, &pool).await?;
+    db::set_positions(positions, &pool).await?;
 
     let template = render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
