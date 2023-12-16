@@ -1,44 +1,17 @@
-use askama::Template;
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
-    response::{Html, IntoResponse, Response},
+    response::IntoResponse,
 };
 use axum_extra::extract::Form;
 
 use serde::Deserialize;
 use sqlx::PgPool;
 
-use crate::todos::Todo;
+use crate::utils;
+use crate::{todos::Todo, utils::HtmlTemplate};
 
 use super::templates;
-
-struct HtmlTemplate<T>(T);
-
-impl<T> IntoResponse for HtmlTemplate<T>
-where
-    T: Template,
-{
-    fn into_response(self) -> Response {
-        match self.0.render() {
-            Ok(html) => Html(html).into_response(),
-            Err(err) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to render template. Error: {err}"),
-            )
-                .into_response(),
-        }
-    }
-}
-
-/// Utility function for mapping any error into a `500 Internal Server Error`
-/// response.
-fn internal_error<E>(err: E) -> (StatusCode, String)
-where
-    E: std::error::Error,
-{
-    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-}
 
 #[derive(Deserialize)]
 pub struct TodoCreateParams {
@@ -52,7 +25,7 @@ async fn get_todos(pool: &PgPool) -> Result<Vec<Todo>, (StatusCode, String)> {
     )
     .fetch_all(pool)
     .await
-    .map_err(internal_error)
+    .map_err(utils::internal_error)
 }
 
 async fn delete_todos(todos: Vec<Todo>, pool: &PgPool) -> Result<(), (StatusCode, String)> {
@@ -61,7 +34,7 @@ async fn delete_todos(todos: Vec<Todo>, pool: &PgPool) -> Result<(), (StatusCode
     sqlx::query!("delete from todos where id = ANY($1)", &delete_ids)
         .execute(pool)
         .await
-        .map_err(internal_error)?;
+        .map_err(utils::internal_error)?;
     Ok(())
 }
 
@@ -90,7 +63,7 @@ pub async fn create(
     )
     .execute(&pool)
     .await
-    .map_err(internal_error)?;
+    .map_err(utils::internal_error)?;
 
     let template = render_all_todos(&pool).await?;
 
@@ -171,7 +144,7 @@ async fn set_positions(
     )
     .execute(pool)
     .await
-    .map_err(internal_error)?;
+    .map_err(utils::internal_error)?;
     Ok(())
 }
 
@@ -238,7 +211,7 @@ pub async fn update(
     )
     .execute(&pool)
     .await
-    .map_err(internal_error)?;
+    .map_err(utils::internal_error)?;
 
     let template = render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
@@ -251,7 +224,7 @@ pub async fn delete(
     sqlx::query!("DELETE FROM todos where id = $1", todo_id)
         .execute(&pool)
         .await
-        .map_err(internal_error)?;
+        .map_err(utils::internal_error)?;
 
     let template = render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
