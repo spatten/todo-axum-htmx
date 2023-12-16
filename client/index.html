@@ -14,8 +14,8 @@
     <div id="headers">
       <div id="counters"></div>
       <div id="actions">
-        <a hx-post="/todos/move_complete_to_bottom" hx-target="#todos">move done to bottom</a>
-        <a hx-delete="/todos/delete_completed" hx-target="#todos">archive done</a>
+        <button hx-post="/todos/move_complete_to_bottom" hx-target="#todos">move done to bottom</button>
+        <button hx-delete="/todos/delete_completed" hx-target="#todos">archive done</button>
       </div>
     </div>
     <div id="todos-container" hx-trigger="load" hx-get="/todos" >
