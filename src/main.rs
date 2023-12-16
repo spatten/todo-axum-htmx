@@ -1,5 +1,5 @@
 use axum::{
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
     Router,
 };
 
@@ -49,6 +49,10 @@ async fn main() {
         .route(
             "/todos/move_complete_to_bottom",
             post(todos::responses::move_complete_to_bottom),
+        )
+        .route(
+            "/todos/delete_completed",
+            delete(todos::responses::delete_completed),
         )
         .route("/todos/ordering", post(todos::responses::update_order))
         .fallback_service(serve_dir)

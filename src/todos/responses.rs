@@ -56,6 +56,16 @@ async fn get_todos(pool: &PgPool) -> Result<Vec<Todo>, (StatusCode, String)> {
     .map_err(internal_error)
 }
 
+async fn delete_todos(todos: Vec<Todo>, pool: &PgPool) -> Result<(), (StatusCode, String)> {
+    let delete_ids = todos.iter().map(|t| t.id as i32).collect::<Vec<_>>();
+    // https://github.com/launchbadge/sqlx/blob/main/FAQ.md#how-can-i-do-a-select--where-foo-in--query
+    sqlx::query!("delete from todos where id = ANY($1)", &delete_ids)
+        .execute(pool)
+        .await
+        .map_err(internal_error)?;
+    Ok(())
+}
+
 async fn render_all_todos(
     pool: PgPool,
 ) -> Result<templates::TodosInnerTemplate, (StatusCode, String)> {
@@ -117,6 +127,19 @@ pub async fn move_complete_to_bottom(
         .collect::<Vec<_>>();
     let todos = set_positions(positions, &pool).await?;
     let template = render_todos(todos);
+    Ok(HtmlTemplate(template))
+}
+
+pub async fn delete_completed(
+    State(pool): State<PgPool>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let todos = get_todos(&pool).await?;
+    let (completed, pending): (Vec<_>, Vec<_>) = todos.into_iter().partition(|t| t.done);
+
+    // Delete the completed ones
+    delete_todos(completed, &pool).await?;
+
+    let template = render_todos(pending);
     Ok(HtmlTemplate(template))
 }
 
