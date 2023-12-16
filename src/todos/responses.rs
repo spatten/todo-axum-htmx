@@ -9,7 +9,7 @@ use serde::Deserialize;
 use sqlx::PgPool;
 
 use crate::utils;
-use crate::{todos::Todo, utils::HtmlTemplate};
+use crate::utils::HtmlTemplate;
 
 use super::{db, templates};
 
@@ -18,21 +18,7 @@ pub struct TodoCreateParams {
     description: String,
 }
 
-async fn render_all_todos(
-    pool: &PgPool,
-) -> Result<templates::TodosInnerTemplate, (StatusCode, String)> {
-    let todos = db::get_todos(pool).await?;
-    Ok(render_todos(todos))
-}
-
-fn render_todos(todos: Vec<Todo>) -> templates::TodosInnerTemplate {
-    let todos: Vec<templates::TodoLiTemplate> =
-        todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
-    templates::TodosInnerTemplate {
-        todos, // todos: templates::TodosInnerTemplate { todos },
-    }
-}
-
+// post /todos
 pub async fn create(
     State(pool): State<PgPool>,
     Form(params): Form<TodoCreateParams>,
@@ -45,7 +31,7 @@ pub async fn create(
     .await
     .map_err(utils::internal_error)?;
 
-    let template = render_all_todos(&pool).await?;
+    let template = templates::render_all_todos(&pool).await?;
 
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -57,14 +43,16 @@ pub async fn create(
     Ok((headers, HtmlTemplate(template)))
 }
 
+// get /todos
 pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let inner_template = render_all_todos(&pool).await?;
+    let inner_template = templates::render_all_todos(&pool).await?;
     let template = templates::TodosUlTemplate {
         todos: inner_template,
     };
     Ok(HtmlTemplate(template))
 }
 
+// post /todos/move_complete_to_bottom
 pub async fn move_complete_to_bottom(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
@@ -78,10 +66,11 @@ pub async fn move_complete_to_bottom(
         .map(|(position, todo)| (position as i32, todo.id as i32))
         .collect::<Vec<_>>();
     db::set_positions(positions, &pool).await?;
-    let template = render_all_todos(&pool).await?;
+    let template = templates::render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
 }
 
+// post /todos/delete_completed
 pub async fn delete_completed(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
@@ -91,7 +80,7 @@ pub async fn delete_completed(
     // Delete the completed ones
     db::delete_todos(completed, &pool).await?;
 
-    let template = render_todos(pending);
+    let template = templates::render_todos(pending);
     Ok(HtmlTemplate(template))
 }
 
@@ -100,6 +89,7 @@ pub struct TodoOrderingParams {
     order: Vec<String>,
 }
 
+// post /todos/ordering
 pub async fn update_order(
     State(pool): State<PgPool>,
     Form(params): Form<TodoOrderingParams>,
@@ -114,7 +104,7 @@ pub async fn update_order(
         .collect::<Vec<_>>();
     db::set_positions(positions, &pool).await?;
 
-    let template = render_all_todos(&pool).await?;
+    let template = templates::render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
 }
 
@@ -148,6 +138,7 @@ impl From<String> for CheckBox {
     }
 }
 
+// put /todos/:id
 pub async fn update(
     Path(todo_id): Path<i32>,
     State(pool): State<PgPool>,
@@ -165,10 +156,11 @@ pub async fn update(
     .await
     .map_err(utils::internal_error)?;
 
-    let template = render_all_todos(&pool).await?;
+    let template = templates::render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
 }
 
+// delete /todos/:id
 pub async fn delete(
     Path(todo_id): Path<i32>,
     State(pool): State<PgPool>,
@@ -178,6 +170,6 @@ pub async fn delete(
         .await
         .map_err(utils::internal_error)?;
 
-    let template = render_all_todos(&pool).await?;
+    let template = templates::render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
 }

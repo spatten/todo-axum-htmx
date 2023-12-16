@@ -1,5 +1,7 @@
-use super::Todo;
+use super::{db, Todo};
 use askama::Template;
+use axum::http::StatusCode;
+use sqlx::PgPool;
 
 impl From<Todo> for TodoLiTemplate {
     fn from(todo: Todo) -> Self {
@@ -47,4 +49,16 @@ pub struct TodoLiTemplate {
     id: i64,
     done: bool,
     description: String,
+}
+
+pub async fn render_all_todos(pool: &PgPool) -> Result<TodosInnerTemplate, (StatusCode, String)> {
+    let todos = db::get_todos(pool).await?;
+    Ok(render_todos(todos))
+}
+
+pub fn render_todos(todos: Vec<Todo>) -> TodosInnerTemplate {
+    let todos: Vec<TodoLiTemplate> = todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+    TodosInnerTemplate {
+        todos, // todos: templates::TodosInnerTemplate { todos },
+    }
 }

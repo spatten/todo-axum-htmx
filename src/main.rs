@@ -43,7 +43,7 @@ async fn main() {
             get(todos::responses::list).post(todos::responses::create),
         )
         .route(
-            "/todo/:id",
+            "/todos/:id",
             put(todos::responses::update).delete(todos::responses::delete),
         )
         .route(
