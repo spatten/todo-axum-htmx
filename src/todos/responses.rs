@@ -46,17 +46,20 @@ pub struct TodoCreateParams {
     description: String,
 }
 
-async fn render_all_todos(
-    pool: PgPool,
-) -> Result<templates::TodosInnerTemplate, (StatusCode, String)> {
-    let todos = sqlx::query_as!(
+async fn get_todos(pool: &PgPool) -> Result<Vec<Todo>, (StatusCode, String)> {
+    sqlx::query_as!(
         Todo,
         "select id, done, description, position from todos ORDER BY position desc"
     )
-    .fetch_all(&pool)
+    .fetch_all(pool)
     .await
-    .map_err(internal_error)?;
+    .map_err(internal_error)
+}
 
+async fn render_all_todos(
+    pool: PgPool,
+) -> Result<templates::TodosInnerTemplate, (StatusCode, String)> {
+    let todos = get_todos(&pool).await?;
     Ok(render_todos(todos))
 }
 
@@ -103,13 +106,47 @@ pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (Stat
 pub async fn move_complete_to_bottom(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let template = render_all_todos(pool).await?;
+    let mut todos = get_todos(&pool).await?;
+    todos.sort_by(|a, b| a.position.cmp(&b.position));
+    let (mut completed, mut pending): (Vec<_>, Vec<_>) = todos.into_iter().partition(|t| t.done);
+    completed.append(&mut pending);
+    let positions = completed
+        .iter()
+        .enumerate()
+        .map(|(position, todo)| (position as i32, todo.id as i32))
+        .collect::<Vec<_>>();
+    let todos = set_positions(positions, &pool).await?;
+    let template = render_todos(todos);
     Ok(HtmlTemplate(template))
 }
 
 #[derive(Deserialize)]
 pub struct TodoOrderingParams {
     order: Vec<String>,
+}
+
+// Given a vec of (position, id), set the position for each todo by id
+// and return the resulting Todos
+async fn set_positions(
+    positions: Vec<(i32, i32)>,
+    pool: &PgPool,
+) -> Result<Vec<Todo>, (StatusCode, String)> {
+    let tx = pool.begin().await.map_err(internal_error)?;
+
+    let queries = positions.iter().map(|(position, id)| async {
+        sqlx::query_as!(
+            Todo,
+            "update todos set position = $1 where id = $2 RETURNING *;",
+            position.clone(),
+            id.clone()
+        )
+        .fetch_one(pool)
+        .await
+    });
+    let mut todos = try_join_all(queries).await.map_err(internal_error)?;
+    todos.sort_by(|a, b| b.position.cmp(&a.position));
+    tx.commit().await.map_err(internal_error)?;
+    Ok(todos)
 }
 
 pub async fn update_order(
@@ -124,21 +161,7 @@ pub async fn update_order(
         .enumerate()
         .map(|(pos, id)| (pos as i32, id.parse().unwrap_or(0)))
         .collect::<Vec<_>>();
-    let tx = pool.begin().await.map_err(internal_error)?;
-
-    let queries = positions.iter().map(|(position, id)| async {
-        sqlx::query_as!(
-            Todo,
-            "update todos set position = $1 where id = $2 RETURNING *;",
-            position.clone(),
-            id.clone()
-        )
-        .fetch_one(&pool)
-        .await
-    });
-    let mut todos = try_join_all(queries).await.map_err(internal_error)?;
-    todos.sort_by(|a, b| b.position.cmp(&a.position));
-    tx.commit().await.map_err(internal_error)?;
+    let todos = set_positions(positions, &pool).await?;
 
     let template = render_todos(todos);
     Ok(HtmlTemplate(template))
