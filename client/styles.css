@@ -74,3 +74,8 @@ body {
   opacity: 1;
   transition: opacity .25s ease-out;
 }
+
+#todos input[type="checkbox"]:checked ~ label {
+ text-decoration: line-through;
+ opacity: 50%;
+}
