@@ -6,7 +6,7 @@ use axum::{
 use axum_extra::extract::Form;
 
 use serde::Deserialize;
-use sqlx::PgPool;
+use sqlx::{postgres::PgArguments, query::Query, PgPool, Postgres};
 
 use crate::utils;
 use crate::utils::HtmlTemplate;
@@ -121,6 +121,7 @@ pub async fn update_order(
 #[derive(Debug, Deserialize)]
 pub struct TodoUpdateParams {
     done: Option<String>,
+    description: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -156,15 +157,25 @@ pub async fn update(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let check_box: CheckBox = params.done.unwrap_or(String::from("Off")).into();
     let check_box: bool = check_box.into();
+    let query: Query<'_, Postgres, PgArguments>;
 
-    sqlx::query!(
-        "UPDATE todos set done = $1 where id = $2",
-        check_box,
-        todo_id,
-    )
-    .execute(&pool)
-    .await
-    .map_err(utils::internal_error)?;
+    // Right now, updates come from either the edit form (which just ships up a description)
+    // or clicking the checkbox (which just ships up the check_box)
+    // So we only set one or the other
+    if let Some(description) = params.description {
+        query = sqlx::query!(
+            "Update todos set description = $1 where id = $2",
+            description,
+            todo_id,
+        )
+    } else {
+        query = sqlx::query!(
+            "UPDATE todos set done = $1 where id = $2",
+            check_box,
+            todo_id,
+        )
+    }
+    query.execute(&pool).await.map_err(utils::internal_error)?;
 
     let template = templates::render_all_todos(&pool).await?;
     Ok(HtmlTemplate(template))
