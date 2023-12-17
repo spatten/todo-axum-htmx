@@ -55,6 +55,7 @@ async fn main() {
             delete(todos::responses::delete_completed),
         )
         .route("/todos/ordering", post(todos::responses::update_order))
+        .route("/todos/:id/edit", get(todos::responses::edit))
         .fallback_service(serve_dir)
         .layer(TraceLayer::new_for_http())
         .with_state(pool);

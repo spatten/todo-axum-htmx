@@ -1,7 +1,19 @@
+{% match ui_state %}
+{% when TodoUiState::Editable %}
+<form hx-put="/todos/{{ id }}" id="update-todo-form" hx-swap="innerHTML swap:.25s" hx-target="#todos">
+  <input class="todo-edit-description" type="text" name="description" placeholder="Type your todo here and hit return!" value="{{ description }}">
+</form>
+{% when TodoUiState::Normal %}
 <li class="fade-out fade-in">
   <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.25s">&#10060;</span>
-  <button class="edit-link">edit</button>
+  <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos">edit</button>
   <input type="checkbox" id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done" hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
   <label for="todo-{{ id }}-checkbox">{{ description }}</label>
   <input type='hidden' name='order' value='{{ id }}'/>
 </li>
+{% when TodoUiState::Disabled %}
+<li class="disabled">
+  <input type="checkbox" disabled id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done" hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
+  <label disabled for="todo-{{ id }}-checkbox">{{ description }}</label>
+</li>
+{% endmatch %}

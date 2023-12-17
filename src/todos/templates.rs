@@ -1,7 +1,21 @@
+use std::fmt::{self};
+
 use super::{db, Todo};
 use askama::Template;
 use axum::http::StatusCode;
 use sqlx::PgPool;
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+enum TodoUiState {
+    Normal,
+    Editable,
+    Disabled,
+}
+impl fmt::Display for TodoUiState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 impl From<Todo> for TodoLiTemplate {
     fn from(todo: Todo) -> Self {
@@ -9,6 +23,7 @@ impl From<Todo> for TodoLiTemplate {
             done: todo.done,
             id: todo.id,
             description: todo.description,
+            ui_state: TodoUiState::Normal,
         }
     }
 }
@@ -46,19 +61,32 @@ impl TodosInnerTemplate {
 #[derive(Template)]
 #[template(path = "todo_li.html")]
 pub struct TodoLiTemplate {
-    id: i64,
+    id: i32,
     done: bool,
     description: String,
+    ui_state: TodoUiState,
 }
 
 pub async fn render_all_todos(pool: &PgPool) -> Result<TodosInnerTemplate, (StatusCode, String)> {
     let todos = db::get_todos(pool).await?;
-    Ok(render_todos(todos))
+    Ok(render_todos(todos, None))
 }
 
-pub fn render_todos(todos: Vec<Todo>) -> TodosInnerTemplate {
+pub fn render_todos(todos: Vec<Todo>, editable_id: Option<i32>) -> TodosInnerTemplate {
     let todos: Vec<TodoLiTemplate> = todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
-    TodosInnerTemplate {
-        todos, // todos: templates::TodosInnerTemplate { todos },
+    if let Some(editable_id) = editable_id {
+        let todos = todos
+            .into_iter()
+            .map(|mut t| {
+                if t.id == editable_id {
+                    t.ui_state = TodoUiState::Editable;
+                } else {
+                    t.ui_state = TodoUiState::Disabled;
+                }
+                t
+            })
+            .collect::<Vec<_>>();
+        return TodosInnerTemplate { todos };
     }
+    TodosInnerTemplate { todos }
 }

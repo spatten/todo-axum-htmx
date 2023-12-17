@@ -4,8 +4,8 @@ mod templates;
 
 #[derive(Debug, Clone)]
 struct Todo {
-    id: i64,
+    id: i32,
     done: bool,
     description: String,
-    position: i64,
+    position: i32,
 }

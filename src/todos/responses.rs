@@ -52,6 +52,16 @@ pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (Stat
     Ok(HtmlTemplate(template))
 }
 
+// get /todos/:id/edit
+pub async fn edit(
+    Path(editable_id): Path<i32>,
+    pool: State<PgPool>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let todos = db::get_todos(&pool).await?;
+    let template = templates::render_todos(todos, Some(editable_id));
+    Ok(HtmlTemplate(template))
+}
+
 // post /todos/move_complete_to_bottom
 pub async fn move_complete_to_bottom(
     State(pool): State<PgPool>,
@@ -63,7 +73,7 @@ pub async fn move_complete_to_bottom(
     let positions = completed
         .iter()
         .enumerate()
-        .map(|(position, todo)| (position as i32, todo.id as i32))
+        .map(|(position, todo)| (position as i32, todo.id))
         .collect::<Vec<_>>();
     db::set_positions(positions, &pool).await?;
     let template = templates::render_all_todos(&pool).await?;
@@ -80,7 +90,7 @@ pub async fn delete_completed(
     // Delete the completed ones
     db::delete_todos(completed, &pool).await?;
 
-    let template = templates::render_todos(pending);
+    let template = templates::render_todos(pending, None);
     Ok(HtmlTemplate(template))
 }
 

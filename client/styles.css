@@ -29,6 +29,13 @@ body {
   font-size: 1.2em;
 }
 
+.todo-edit-description {
+  padding: .75em;
+  margin: 2em 1em 1em 1em;
+  font-size: 1.2em;
+  width: 150%;
+}
+
 #todos-container {
   margin-top: 1em;
 }
@@ -48,6 +55,10 @@ body {
   border: thin white solid;
   border-radius: 1em;
   width: 100%;
+}
+
+#todos li.disabled {
+  opacity: 50%;
 }
 
 #todos li label {
