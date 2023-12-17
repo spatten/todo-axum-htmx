@@ -36,12 +36,39 @@ body {
 #todos {
   list-style-type: none;
   padding: 0;
+  width: fit-content;
 }
 
 #todos li {
   padding-bottom: 0.5em;
+  padding-top: 0.5em;
   font-size: 1.25em;
+  padding-right: 2em;
+  padding-left: 1em;
+  border: thin white solid;
+  border-radius: 1em;
+  width: 100%;
 }
+
+#todos li label {
+  display: inline-block;
+  width: 70%;
+}
+
+#todos li:hover {
+  border: thin grey solid;
+}
+
+#todos .edit-link {
+  visibility: hidden;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+#todos li:hover .edit-link {
+  visibility: visible;
+}
+
 
 #todos li input {
   position: relative;
