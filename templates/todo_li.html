@@ -1,7 +1,7 @@
 {% match ui_state %}
 {% when TodoUiState::Editable %}
 <form hx-put="/todos/{{ id }}" id="update-todo-form" hx-swap="innerHTML swap:.25s" hx-target="#todos">
-  <input class="todo-edit-description" type="text" name="description" placeholder="Type your todo here and hit return!" value="{{ description }}">
+  <input autofocus class="todo-edit-description" type="text" name="description" placeholder="Type your todo here and hit return!" value="{{ description }}">
 </form>
 {% when TodoUiState::Normal %}
 <li class="fade-out fade-in">

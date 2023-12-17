@@ -63,7 +63,7 @@ body {
 
 #todos li label {
   display: inline-block;
-  width: 70%;
+  width: 60%;
 }
 
 #todos li:hover {
