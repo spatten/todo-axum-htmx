@@ -5,6 +5,25 @@ use crate::utils;
 
 use super::Todo;
 
+pub async fn create(description: &str, pool: &PgPool) -> Result<(), (StatusCode, String)> {
+    sqlx::query!(
+        "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1));",
+        description,
+    )
+    .execute(pool)
+    .await
+    .map_err(utils::internal_error)?;
+    Ok(())
+}
+
+pub async fn delete(id: &i32, pool: &PgPool) -> Result<(), (StatusCode, String)> {
+    sqlx::query!("DELETE FROM todos where id = $1", id)
+        .execute(pool)
+        .await
+        .map_err(utils::internal_error)?;
+    Ok(())
+}
+
 pub async fn get_todos(pool: &PgPool) -> Result<Vec<Todo>, (StatusCode, String)> {
     sqlx::query_as!(
         Todo,

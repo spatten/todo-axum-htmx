@@ -23,14 +23,7 @@ pub async fn create(
     State(pool): State<PgPool>,
     Form(params): Form<TodoCreateParams>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    sqlx::query!(
-        "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1));",
-        params.description,
-    )
-    .execute(&pool)
-    .await
-    .map_err(utils::internal_error)?;
-
+    db::create(&params.description, &pool).await?;
     let template = templates::render_all_todos(&pool).await?;
 
     let mut headers = HeaderMap::new();
@@ -187,6 +180,7 @@ pub async fn delete(
     Path(todo_id): Path<i32>,
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
+    db::delete(&todo_id, &pool).await?;
     sqlx::query!("DELETE FROM todos where id = $1", todo_id)
         .execute(&pool)
         .await
