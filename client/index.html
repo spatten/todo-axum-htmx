@@ -8,6 +8,7 @@
     <title>TODO In Rust + HTMX</title>
   </head>
   <body>
+    <div id="modal-dialog"></div>
     <form hx-post="/todos" id="create-todo-form" hx-swap="innerHTML swap:.25s" hx-target="#todos">
       <input autofocus id="create-todo" type="text" name="description" placeholder="Type your todo here and hit return!"/>
     </form>

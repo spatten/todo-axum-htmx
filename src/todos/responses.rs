@@ -50,8 +50,8 @@ pub async fn edit(
     Path(editable_id): Path<i32>,
     pool: State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let todos = db::get_todos(&pool).await?;
-    let template = templates::render_todos(todos);
+    let todo = db::find_one(&editable_id, &pool).await?;
+    let template = templates::render_edit(todo);
     println!("editing {editable_id}");
     Ok(HtmlTemplate(template))
 }

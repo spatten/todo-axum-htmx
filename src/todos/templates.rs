@@ -60,3 +60,17 @@ pub fn render_todos(todos: Vec<Todo>) -> TodosInnerTemplate {
     let todos: Vec<TodoLiTemplate> = todos.into_iter().map(|t| t.into()).collect::<Vec<_>>();
     TodosInnerTemplate { todos }
 }
+
+#[derive(Template)]
+#[template(path = "todo_edit.html")]
+pub struct TodoEditTemplate {
+    id: i32,
+    description: String,
+}
+
+pub fn render_edit(todo: Todo) -> TodoEditTemplate {
+    TodoEditTemplate {
+        id: todo.id,
+        description: todo.description,
+    }
+}

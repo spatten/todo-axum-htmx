@@ -24,6 +24,17 @@ pub async fn delete(id: &i32, pool: &PgPool) -> Result<(), (StatusCode, String)>
     Ok(())
 }
 
+pub async fn find_one(id: &i32, pool: &PgPool) -> Result<Todo, (StatusCode, String)> {
+    sqlx::query_as!(
+        Todo,
+        "select id, done, description, position from todos where id = $1",
+        id,
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(utils::internal_error)
+}
+
 pub async fn get_todos(pool: &PgPool) -> Result<Vec<Todo>, (StatusCode, String)> {
     sqlx::query_as!(
         Todo,
