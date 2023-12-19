@@ -1,0 +1,8 @@
+<div id="modal-dialog" class="active modal">
+  <div class="modal-content">
+    <form id="edit-form" hx-put="/todos/{{ id }}" hx-target="#todos">
+      <input autofocus type="text" name="description" value="{{ description }}" />
+    </form>
+  </div>
+</div>
+
