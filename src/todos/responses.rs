@@ -58,7 +58,8 @@ pub async fn edit(
     pool: State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let todos = db::get_todos(&pool).await?;
-    let template = templates::render_todos(todos, Some(editable_id));
+    let template = templates::render_todos(todos);
+    println!("editing {editable_id}");
     Ok(HtmlTemplate(template))
 }
 
@@ -90,7 +91,7 @@ pub async fn delete_completed(
     // Delete the completed ones
     db::delete_todos(completed, &pool).await?;
 
-    let template = templates::render_todos(pending, None);
+    let template = templates::render_todos(pending);
     Ok(HtmlTemplate(template))
 }
 
