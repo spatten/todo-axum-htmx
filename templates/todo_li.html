@@ -1,28 +1,15 @@
-{% match ui_state %}
-{% when TodoUiState::Editable %}
-<li id="todo-{{ id }}" class="grow editable">
+<li id="todo-{{ id }}" class="grow {{ ui_state }}">
   <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.5s">&#10060;</span>
   <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="innerHTML">edit</button>
+  {% if ui_state ==  TodoUiState::Editable %}
   <form hx-put="/todos/{{ id }}" hx-swap="innerHTML" hx-target="#todos">
     <input autofocus class="todo-edit-description" type="text" name="description"
       placeholder="Type your todo here and hit return!" value="{{ description }}">
   </form>
-</li>
-{% when TodoUiState::Normal %}
-<li class="grow normal" id="todo-{{ id }}">
-  <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.5s">&#10060;</span>
-  <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="innerHTML">edit</button>
-  <input type="checkbox" id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done"
+  {% else %}
+  <input type="checkbox" {% if ui_state == TodoUiState::Disabled %}disabled{% endif %} id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done"
     hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
   <label for="todo-{{ id }}-checkbox">{{ description }}</label>
   <input type='hidden' name='order' value='{{ id }}' />
+  {% endif %}
 </li>
-{% when TodoUiState::Disabled %}
-<li class="disabled" id="todo-{{ id }}">
-  <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.5s">&#10060;</span>
-  <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="innerHTML">edit</button>
-  <input type="checkbox" disabled id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done"
-    hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
-  <label disabled for="todo-{{ id }}-checkbox">{{ description }}</label>
-</li>
-{% endmatch %}

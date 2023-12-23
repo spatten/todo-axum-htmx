@@ -11,9 +11,15 @@ enum TodoUiState {
     Editable,
     Disabled,
 }
+
 impl fmt::Display for TodoUiState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        f.write_str(match self {
+            TodoUiState::Normal => "normal",
+            TodoUiState::Editable => "editable",
+            TodoUiState::Disabled => "disabled",
+        })?;
+        Ok(())
     }
 }
 
