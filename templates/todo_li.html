@@ -1,4 +1,4 @@
-<li id="todo-{{ id }}" class="grow {{ ui_state }}">
+<li id="todo-{{ id }}" class="grow fade-out fade-in {{ ui_state }}">
   <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.5s">&#10060;</span>
   <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="innerHTML">edit</button>
   {% if ui_state ==  TodoUiState::Editable %}
