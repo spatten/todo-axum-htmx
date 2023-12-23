@@ -15,7 +15,7 @@
       <div id="counters"></div>
       <div id="actions">
         <button hx-post="/todos/move_complete_to_bottom" hx-target="#todos">move done to bottom</button>
-        <button hx-delete="/todos/delete_completed" hx-target="#todos">archive done</button>
+        <button hx-delete="/todos/delete_completed" hx-target="#todos" hx-confirm="Are you sure you want to delete all completed todos?">archive done</button>
       </div>
     </div>
     <div id="todos-container" hx-trigger="load" hx-get="/todos" >
