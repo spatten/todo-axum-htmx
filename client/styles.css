@@ -57,11 +57,10 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 1em;
 }
 
 #todos li.editable {
-  height: 2em;
+  height: 2.5em;
 }
 
 #todos li.disabled {
