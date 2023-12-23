@@ -1,4 +1,4 @@
-<div id="headers" hx-swap-oob="true">
+<div id="controls" hx-swap-oob="true">
   <form hx-post="/todos" id="create-todo-form" hx-swap="innerHTML swap:.25s" hx-target="#todos" {% if editable
     %}disabled{% endif %}>
     <input autofocus id="create-todo" type="text" name="description" placeholder="Type your todo here and hit return!"

@@ -8,8 +8,7 @@
     <title>TODO In Rust + HTMX</title>
   </head>
   <body>
-    <div id="headers">
-    </div>
+    <div id="controls"></div>
     <div id="todos-container" hx-trigger="load" hx-get="/todos" >
       <ul id="todos" class="sortable" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
       </ul>
