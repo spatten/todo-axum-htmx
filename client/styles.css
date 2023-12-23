@@ -83,7 +83,7 @@ body {
   margin-right: 0.5em;
 }
 
-#todos li:hover .edit-link {
+#todos li.normal:hover .edit-link {
   visibility: visible;
 }
 
@@ -100,7 +100,7 @@ body {
   font-size: 0.7em;
 }
 
-#todos li:hover span.delete {
+#todos li.normal:hover span.delete {
   visibility: visible;
   cursor: pointer;
 }
