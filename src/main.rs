@@ -1,7 +1,4 @@
-use axum::{
-    routing::{delete, get, post, put},
-    Router,
-};
+use axum::Router;
 
 use listenfd::ListenFd;
 
@@ -28,6 +25,7 @@ async fn main() {
         .expect("should be able to make a query");
     assert_eq!(row.0, 150);
 
+    // Setup tracing
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
         .init();
@@ -35,30 +33,12 @@ async fn main() {
     // Serve files from the client directory, falling back to client/404.html
     let serve_dir = ServeDir::new("client").not_found_service(ServeFile::new("client/404.html"));
 
-    // Respond to GET /search, otherwise attempt to serve the file from the client directory
-    // Also, add our postgres pool to the state so that our routes can use it
+    // Respond to these routes, otherwise attempt to serve the file from the client directory
+    // Also, add tracing of requests and add the postgres pool to the state so that our routes can use it
     let app = Router::new()
-        .route(
-            "/todos",
-            get(todos::responses::list).post(todos::responses::create),
-        )
-        .route(
-            "/todos/:id",
-            put(todos::responses::update).delete(todos::responses::delete),
-        )
-        .route(
-            "/todos/move_complete_to_bottom",
-            post(todos::responses::move_complete_to_bottom),
-        )
-        .route(
-            "/todos/delete_completed",
-            delete(todos::responses::delete_completed),
-        )
-        .route("/todos/ordering", post(todos::responses::update_order))
-        .route("/todos/:id/edit", get(todos::responses::edit))
+        .nest("/todos", todos::responses::routes(&pool))
         .fallback_service(serve_dir)
-        .layer(TraceLayer::new_for_http())
-        .with_state(pool);
+        .layer(TraceLayer::new_for_http());
 
     // Auto-reload if you use `make watch`: https://github.com/tokio-rs/axum/blob/main/examples/auto-reload/src/main.rs
     let mut listenfd = ListenFd::from_env();
@@ -75,6 +55,8 @@ async fn main() {
             .await
             .expect("should be able to bind to 3000"),
     };
+
+    // Start serving
     axum::serve(listener, app)
         .await
         .expect("should be able to serve");

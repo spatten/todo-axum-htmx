@@ -2,24 +2,39 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
+    routing::{delete, get, post, put},
+    Router,
 };
+
 use axum_extra::extract::Form;
 
 use serde::Deserialize;
-use sqlx::{postgres::PgArguments, query::Query, PgPool, Postgres};
+use sqlx::{postgres::PgArguments, query::Query, PgPool, Pool, Postgres};
 
 use crate::utils;
 use crate::utils::HtmlTemplate;
 
 use super::{db, templates};
 
+// todos routes, nested under /todos
+pub fn routes(pool: &Pool<Postgres>) -> Router {
+    Router::new()
+        .route("/", get(list).post(create))
+        .route("/:id", put(update).delete(destroy))
+        .route("/move_complete_to_bottom", post(move_complete_to_bottom))
+        .route("/delete_completed", delete(delete_completed))
+        .route("/ordering", post(update_order))
+        .route("/:id/edit", get(edit))
+        .with_state(pool.clone())
+}
+
 #[derive(Deserialize)]
-pub struct TodoCreateParams {
+struct TodoCreateParams {
     description: String,
 }
 
 // post /todos
-pub async fn create(
+async fn create(
     State(pool): State<PgPool>,
     Form(params): Form<TodoCreateParams>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
@@ -44,7 +59,7 @@ pub async fn create(
 }
 
 // get /todos
-pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (StatusCode, String)> {
+async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (StatusCode, String)> {
     let inner_template = templates::render_all_todos(&pool).await?;
     let template = templates::TodosUlTemplate {
         todos: inner_template,
@@ -53,7 +68,7 @@ pub async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (Stat
 }
 
 // get /todos/:id/edit
-pub async fn edit(
+async fn edit(
     Path(editable_id): Path<i32>,
     pool: State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
@@ -63,7 +78,7 @@ pub async fn edit(
 }
 
 // post /todos/move_complete_to_bottom
-pub async fn move_complete_to_bottom(
+async fn move_complete_to_bottom(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let mut todos = db::get_todos(&pool).await?;
@@ -81,7 +96,7 @@ pub async fn move_complete_to_bottom(
 }
 
 // post /todos/delete_completed
-pub async fn delete_completed(
+async fn delete_completed(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let todos = db::get_todos(&pool).await?;
@@ -95,12 +110,12 @@ pub async fn delete_completed(
 }
 
 #[derive(Deserialize)]
-pub struct TodoOrderingParams {
+struct TodoOrderingParams {
     order: Vec<String>,
 }
 
 // post /todos/ordering
-pub async fn update_order(
+async fn update_order(
     State(pool): State<PgPool>,
     Form(params): Form<TodoOrderingParams>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
@@ -119,7 +134,7 @@ pub async fn update_order(
 }
 
 #[derive(Debug, Deserialize)]
-pub struct TodoUpdateParams {
+struct TodoUpdateParams {
     done: Option<String>,
     description: Option<String>,
 }
@@ -150,7 +165,7 @@ impl From<String> for CheckBox {
 }
 
 // put /todos/:id
-pub async fn update(
+async fn update(
     Path(todo_id): Path<i32>,
     State(pool): State<PgPool>,
     Form(params): Form<TodoUpdateParams>,
@@ -182,7 +197,7 @@ pub async fn update(
 }
 
 // delete /todos/:id
-pub async fn delete(
+async fn destroy(
     Path(todo_id): Path<i32>,
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
