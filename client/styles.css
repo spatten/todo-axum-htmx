@@ -30,8 +30,7 @@ body {
 }
 
 .todo-edit-description {
-  padding: .75em;
-  margin: 2em 1em 1em 1em;
+  padding: 0 0 0 0.75em;
   font-size: 1.2em;
   width: 150%;
 }
@@ -55,6 +54,14 @@ body {
   border: thin white solid;
   border-radius: 1em;
   width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 1em;
+}
+
+#todos li.editable {
+  height: 2em;
 }
 
 #todos li.disabled {
@@ -66,7 +73,7 @@ body {
   width: 60%;
 }
 
-#todos li:hover {
+#todos li.normal:hover {
   border: thin grey solid;
 }
 
@@ -118,11 +125,6 @@ body {
   transition: opacity .25s ease-out;
 }
 
-.grow.htmx-added {
-  max-height: 0%;
-}
-
-.grow.htmx-swapping {
-  max-height: 100%;
-  transition: max-height .25s ease-out;
+.grow {
+  transition: all 0.25s ease-in-out;
 }

@@ -1,19 +1,24 @@
 {% match ui_state %}
 {% when TodoUiState::Editable %}
-<form hx-put="/todos/{{ id }}" id="todo-{{ id }}" hx-swap="innerHTML swap:.25s" hx-target="#todos" class="grow">
-  <input autofocus class="todo-edit-description" type="text" name="description" placeholder="Type your todo here and hit return!" value="{{ description }}">
-</form>
+<li id="todo-{{ id }}" class="grow editable">
+  <form hx-put="/todos/{{ id }}" hx-swap="innerHTML" hx-target="#todos">
+    <input autofocus class="todo-edit-description" type="text" name="description"
+      placeholder="Type your todo here and hit return!" value="{{ description }}">
+  </form>
+</li>
 {% when TodoUiState::Normal %}
-<li class="fade-out fade-in grow" id="todo-{{ id }}">
-  <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.25s">&#10060;</span>
-  <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="this swap:.25s">edit</button>
-  <input type="checkbox" id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done" hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
+<li class="grow normal" id="todo-{{ id }}">
+  <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.5s">&#10060;</span>
+  <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="innerHTML">edit</button>
+  <input type="checkbox" id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done"
+    hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
   <label for="todo-{{ id }}-checkbox">{{ description }}</label>
-  <input type='hidden' name='order' value='{{ id }}'/>
+  <input type='hidden' name='order' value='{{ id }}' />
 </li>
 {% when TodoUiState::Disabled %}
 <li class="disabled" id="todo-{{ id }}">
-  <input type="checkbox" disabled id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done" hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
+  <input type="checkbox" disabled id="todo-{{ id }}-checkbox" {% if done %}checked{% endif %} name="done"
+    hx-put="/todos/{{ id }}" hx-swap="none" hx-include="this">
   <label disabled for="todo-{{ id }}-checkbox">{{ description }}</label>
 </li>
 {% endmatch %}
