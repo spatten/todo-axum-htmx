@@ -3,16 +3,16 @@ body {
   /* font-family: sans-serif; */
 }
 
-#headers {
+#controls {
   padding-left: 1.25em;
 }
 
-#headers div {
+#controls div {
   display: inline-block;
   margin-right: 1em;
 }
 
-#headers button {
+#controls button {
   margin-right: 1em;
   padding: 0.25em 0.5em;
 }

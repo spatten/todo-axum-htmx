@@ -8,16 +8,7 @@
     <title>TODO In Rust + HTMX</title>
   </head>
   <body>
-    <form hx-post="/todos" id="create-todo-form" hx-swap="innerHTML swap:.25s" hx-target="#todos">
-      <input autofocus id="create-todo" type="text" name="description" placeholder="Type your todo here and hit return!"/>
-    </form>
-    <div id="headers">
-      <div id="counters"></div>
-      <div id="actions">
-        <button hx-post="/todos/move_complete_to_bottom" hx-target="#todos">move done to bottom</button>
-        <button hx-delete="/todos/delete_completed" hx-target="#todos">archive done</button>
-      </div>
-    </div>
+    <div id="controls"></div>
     <div id="todos-container" hx-trigger="load" hx-get="/todos" >
       <ul id="todos" class="sortable" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
       </ul>

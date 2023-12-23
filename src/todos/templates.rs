@@ -44,6 +44,7 @@ pub struct TodosUlTemplate {
 #[template(path = "todos_inner.html")]
 pub struct TodosInnerTemplate {
     pub todos: Vec<TodoLiTemplate>,
+    pub editable: bool,
 }
 
 impl TodosInnerTemplate {
@@ -92,7 +93,13 @@ pub fn render_todos(todos: Vec<Todo>, editable_id: Option<i32>) -> TodosInnerTem
                 t
             })
             .collect::<Vec<_>>();
-        return TodosInnerTemplate { todos };
+        return TodosInnerTemplate {
+            todos,
+            editable: true,
+        };
     }
-    TodosInnerTemplate { todos }
+    TodosInnerTemplate {
+        todos,
+        editable: false,
+    }
 }
