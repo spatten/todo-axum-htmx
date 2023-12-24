@@ -1,5 +1,7 @@
 use axum::Router;
+use listenfd::ListenFd;
 use sqlx::postgres::PgPoolOptions;
+use tokio::net::TcpListener;
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
@@ -35,4 +37,22 @@ pub async fn app() -> Router {
         .nest("/todos", todos::responses::routes(&pool))
         .fallback_service(serve_dir)
         .layer(TraceLayer::new_for_http())
+}
+
+pub async fn listener() -> TcpListener {
+    // Auto-reload if you use `make watch`: https://github.com/tokio-rs/axum/blob/main/examples/auto-reload/src/main.rs
+    let mut listenfd = ListenFd::from_env();
+    match listenfd
+        .take_tcp_listener(0)
+        .expect("should be able to find an existing listener")
+    {
+        // if we are given a tcp listener on listen fd 0, we use that one
+        Some(listener) => {
+            TcpListener::from_std(listener).expect("should be able to listen to existing listener")
+        }
+        // otherwise fall back to local listening
+        None => TcpListener::bind("127.0.0.1:3000")
+            .await
+            .expect("should be able to bind to 3000"),
+    }
 }
