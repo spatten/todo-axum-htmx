@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <script src="htmx.min.js"></script>
-    <script src="myscript.js"></script>
-    <script src="Sortable.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
-    <title>TODO In Rust + HTMX</title>
-  </head>
-  <body>
-    <div id="controls"></div>
-    <div id="todos-container" hx-trigger="load" hx-get="/todos" >
-      <ul id="todos" class="sortable" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
-      </ul>
-    </div>
-  </body>
+
+<head>
+  <script src="htmx.min.js"></script>
+  <script src="myscript.js"></script>
+  <script src="Sortable.min.js"></script>
+  <script src="https://kit.fontawesome.com/39b3b2b0ec.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css">
+  <title>TODO In Rust + HTMX</title>
+</head>
+
+<body>
+  <div id="controls"></div>
+  <div id="todos-container" hx-trigger="load" hx-get="/todos">
+    <ul id="todos" class="sortable" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
+    </ul>
+  </div>
+</body>
+
 </html>
