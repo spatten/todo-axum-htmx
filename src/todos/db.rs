@@ -16,7 +16,7 @@ pub async fn get_todos(pool: &PgPool) -> Result<Vec<Todo>, (StatusCode, String)>
 }
 
 pub async fn delete_todos(todos: Vec<Todo>, pool: &PgPool) -> Result<(), (StatusCode, String)> {
-    let delete_ids = todos.iter().map(|t| t.id as i32).collect::<Vec<_>>();
+    let delete_ids = todos.iter().map(|t| t.id).collect::<Vec<_>>();
     // https://github.com/launchbadge/sqlx/blob/main/FAQ.md#how-can-i-do-a-select--where-foo-in--query
     sqlx::query!("delete from todos where id = ANY($1)", &delete_ids)
         .execute(pool)
