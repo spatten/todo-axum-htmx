@@ -1,6 +1,6 @@
 <li id="todo-{{ id }}" class="grow fade-out fade-in {{ ui_state }}">
-  <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.5s">&#10060;</span>
-  <button class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="innerHTML">edit</button>
+  <span class="delete" hx-delete="/todos/{{ id }}" hx-target="closest li" hx-swap="delete swap:.5s"><i class="fa-regular fa-trash-can"></i></span>
+  <span class="edit-link" hx-get="/todos/{{ id }}/edit" hx-target="#todos" hx-swap="innerHTML"><i class="fa-regular fa-pen-to-square"></i></span>
   {% if ui_state ==  TodoUiState::Editable %}
   <form hx-put="/todos/{{ id }}" hx-swap="innerHTML" hx-target="#todos">
     <input autofocus class="todo-edit-description" type="text" name="description"

@@ -84,6 +84,7 @@ body {
 
 #todos li.normal:hover .edit-link {
   visibility: visible;
+  cursor: pointer;
 }
 
 
@@ -94,9 +95,6 @@ body {
 
 #todos li span.delete {
   visibility: hidden;
-  color: rgb(140, 40, 40);
-  font-family: sans-serif;
-  font-size: 0.7em;
 }
 
 #todos li.normal:hover span.delete {
