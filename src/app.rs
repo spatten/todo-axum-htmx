@@ -34,7 +34,7 @@ pub async fn app() -> Router {
     // Respond to these routes, otherwise attempt to serve the file from the client directory
     // Also, add tracing of requests and add the postgres pool to the state so that our routes can use it
     Router::new()
-        .nest("/todos", todos::responses::routes(&pool))
+        .nest("/todos", todos::routes::routes(&pool))
         .fallback_service(serve_dir)
         .layer(TraceLayer::new_for_http())
 }

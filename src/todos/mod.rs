@@ -1,5 +1,5 @@
 mod db;
-pub mod responses;
+pub mod routes;
 mod templates;
 
 #[derive(Debug, Clone)]
