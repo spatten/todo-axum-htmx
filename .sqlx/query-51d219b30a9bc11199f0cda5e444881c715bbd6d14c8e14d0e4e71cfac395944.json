@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update todos as original\n         set position=new.position\n         from (select unnest($1::int4[]) as position, unnest($2::int4[]) as id) as new\n         where original.id=new.id;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array",
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "51d219b30a9bc11199f0cda5e444881c715bbd6d14c8e14d0e4e71cfac395944"
+}

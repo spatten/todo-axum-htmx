@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1));",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f07e0eb28ee20a96554f5364fcebe45a49c384419d884cc4c94dfdf37443712c"
+}

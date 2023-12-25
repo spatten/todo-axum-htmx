@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from todos where id = ANY($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7a8e673f095dbce2163e90923925077b8e4a14111a0bcd61b6301925efa27bd3"
+}

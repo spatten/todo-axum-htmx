@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE todos set done = $1 where id = $2 RETURNING id, done, description, position",
+  "query": "select id, done, description, position from todos ORDER BY position desc",
   "describe": {
     "columns": [
       {
@@ -21,14 +21,11 @@
       {
         "ordinal": 3,
         "name": "position",
-        "type_info": "Float4"
+        "type_info": "Int4"
       }
     ],
     "parameters": {
-      "Left": [
-        "Bool",
-        "Int4"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
@@ -37,5 +34,5 @@
       false
     ]
   },
-  "hash": "e9e173f4aa4548db8582b75f7fd40b766a6de51f0a306975a4aeac6f97ea5116"
+  "hash": "34bbe29f7db3a996ef5c052602508f881702581f494fa4da85bea1caae4ed4fd"
 }
