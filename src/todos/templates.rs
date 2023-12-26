@@ -22,15 +22,27 @@ impl fmt::Display for TodoUiState {
         Ok(())
     }
 }
+#[derive(Template)]
+#[template(path = "base.html")]
+struct BaseTemplate {}
 
-impl From<Todo> for TodoLiTemplate {
-    fn from(todo: Todo) -> Self {
-        TodoLiTemplate {
-            done: todo.done,
-            id: todo.id,
-            description: todo.description,
-            ui_state: TodoUiState::Normal,
-        }
+#[derive(Template)]
+#[template(path = "todos_index.html")]
+pub struct TodosIndexTemplate<'a> {
+    _parent: &'a BaseTemplate,
+}
+
+// impl<'a> Deref for TodosIndexTemplate<'a> {
+//     type Target = BaseTemplate;
+
+//     fn deref(&self) -> &Self::Target {
+//         self._parent
+//     }
+// }
+
+pub fn render_index<'a>() -> TodosIndexTemplate<'a> {
+    TodosIndexTemplate {
+        _parent: &BaseTemplate {},
     }
 }
 
@@ -72,6 +84,17 @@ pub struct TodoLiTemplate {
     done: bool,
     description: String,
     ui_state: TodoUiState,
+}
+
+impl From<Todo> for TodoLiTemplate {
+    fn from(todo: Todo) -> Self {
+        TodoLiTemplate {
+            done: todo.done,
+            id: todo.id,
+            description: todo.description,
+            ui_state: TodoUiState::Normal,
+        }
+    }
 }
 
 pub async fn render_all_todos(pool: &PgPool) -> Result<TodosInnerTemplate, (StatusCode, String)> {
