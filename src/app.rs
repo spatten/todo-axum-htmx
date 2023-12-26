@@ -7,7 +7,7 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::todos;
+use crate::{todos, users};
 
 pub async fn app() -> Router {
     // Connect to postgres
@@ -36,6 +36,7 @@ pub async fn app() -> Router {
     Router::new()
         .route("/", get(todos::routes::index))
         .nest("/todos", todos::routes::routes(&pool))
+        .nest("/users", users::routes::routes(&pool))
         .fallback_service(serve_dir)
         .layer(TraceLayer::new_for_http())
 }

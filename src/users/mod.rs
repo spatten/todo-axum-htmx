@@ -1,3 +1,6 @@
+pub mod routes;
+mod templates;
+
 #[derive(Debug, Clone)]
 struct User {
     id: i32,
