@@ -58,6 +58,12 @@ async fn create(
     Ok((headers, HtmlTemplate(template)))
 }
 
+// get /
+pub async fn index() -> impl IntoResponse {
+    let template = templates::render_index();
+    HtmlTemplate(template)
+}
+
 // get /todos
 async fn list(State(pool): State<PgPool>) -> Result<impl IntoResponse, (StatusCode, String)> {
     let inner_template = templates::render_all_todos(&pool).await?;

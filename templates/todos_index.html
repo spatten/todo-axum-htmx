@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+  <title>TODO In Rust + HTMX</title>
+  <div id="controls"></div>
+  <div id="todos-container" hx-trigger="load" hx-get="/todos">
+    <ul id="todos" class="sortable" hx-post="todos/ordering" hx-trigger="drop-end" hx-include="[name=order]">
+      </ul>
+  </div>
+{% endblock content %}
