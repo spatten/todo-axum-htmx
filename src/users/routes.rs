@@ -7,10 +7,13 @@ use axum::{
     Router,
 };
 use axum_extra::extract::Form;
-use serde::Deserialize;
 use sqlx::{PgPool, Pool, Postgres};
 
-use super::{db, templates, User};
+use super::{
+    db,
+    templates::{self, UserForm},
+    User,
+};
 
 // users routes, nested under /users
 pub fn routes(pool: &Pool<Postgres>) -> Router {
@@ -20,42 +23,34 @@ pub fn routes(pool: &Pool<Postgres>) -> Router {
 }
 
 async fn new() -> Result<impl IntoResponse, (StatusCode, String)> {
-    let template = templates::render_new();
+    let template = templates::render_new(None);
     Ok(HtmlTemplate(template))
-}
-
-#[derive(Deserialize)]
-pub struct UserForm {
-    pub email: String,
-    pub password: String,
-    pub email_error: Vec<String>,
-    pub password_error: Vec<String>,
-    password_confirmation: String,
 }
 
 impl UserForm {
     async fn validate(mut self, pool: &PgPool) -> Result<Self, (StatusCode, String)> {
         // password validations
+        let mut password_errors = vec![];
         if self.password.len() < 10 {
-            self.password_error
-                .push("passwords must be at least 10 characters long".to_string())
+            password_errors.push("passwords must be at least 10 characters long".to_string())
         }
         if self.password != self.password_confirmation {
-            self.password_error
-                .push("password and password confirmation must match".to_string())
+            password_errors.push("password and password confirmation must match".to_string())
         };
+        self.password_errors = password_errors.join(", ");
 
         // email validations
+        let mut email_errors = vec![];
         let existing = db::find_by_email(self.email.clone(), pool).await?;
         if existing.is_some() {
-            self.email_error
-                .push("A user with this email already exists".to_string())
+            email_errors.push("A user with this email already exists".to_string())
         }
+        self.email_errors = email_errors.join(", ");
         Ok(self)
     }
 
     fn is_valid(&self) -> bool {
-        self.password_error.is_empty() && self.email_error.is_empty()
+        self.password_errors.is_empty() && self.email_errors.is_empty()
     }
 }
 
@@ -78,8 +73,8 @@ async fn create(
     // validations
     let validated_form = form.validate(&pool).await?;
     if !validated_form.is_valid() {
-        let template = templates::render_new();
-        return Ok(HtmlTemplate(template).into_response());
+        println!("user form is not valid!\n{:?}", validated_form);
+        return Ok(HtmlTemplate(validated_form).into_response());
     }
 
     // create

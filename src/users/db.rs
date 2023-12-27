@@ -3,7 +3,7 @@ use sqlx::PgPool;
 
 use crate::{users::User, utils};
 
-use super::routes::UserForm;
+use super::templates::UserForm;
 
 pub async fn create(params: UserForm, pool: &PgPool) -> Result<(), (StatusCode, String)> {
     let password_hash = params.password;

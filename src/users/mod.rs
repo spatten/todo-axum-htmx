@@ -2,7 +2,7 @@ mod db;
 pub mod routes;
 mod templates;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 struct User {
     id: Option<i32>,
     email: String,
