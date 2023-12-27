@@ -19,3 +19,5 @@ tracing = "0.1.40"
 axum-extra = { version = "0.9.0", features = ["form"] }
 futures = "0.3.29"
 askama = "0.12.1"
+ring = "0.17.7"
+data-encoding = "2.5.0"

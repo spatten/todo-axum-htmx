@@ -2,8 +2,8 @@
 CREATE TABLE users (
   id serial PRIMARY KEY,
   email varchar(255) NOT NULL,
-  password_hash char(100) NOT NULL,
-  salt char(100) NOT NULL
+  password_hash char(128) NOT NULL,
+  salt char(128) NOT NULL
 );
 CREATE UNIQUE INDEX "users_email_key" ON users(email);
 

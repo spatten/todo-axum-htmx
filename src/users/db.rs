@@ -3,11 +3,11 @@ use sqlx::PgPool;
 
 use crate::{users::User, utils};
 
-use super::templates::UserForm;
+use super::{salted_hash, templates::UserForm};
 
 pub async fn create(params: UserForm, pool: &PgPool) -> Result<(), (StatusCode, String)> {
-    let password_hash = params.password;
-    let salt = "01234".to_string();
+    let (password_hash, salt) = salted_hash(params.password.as_str())
+        .map_err(|_| utils::internal_error_from_string("error while hashing password"))?;
     sqlx::query!(
         "INSERT INTO users (email, password_hash, salt) VALUES ($1,$2,$3);",
         params.email,
