@@ -1,9 +1,9 @@
 use axum::http::StatusCode;
 use sqlx::PgPool;
 
-use crate::{users::User, utils};
+use crate::{users::model::User, utils};
 
-use super::{salted_hash, templates::UserForm};
+use super::{model::salted_hash, templates::UserForm};
 
 pub async fn create(params: UserForm, pool: &PgPool) -> Result<(), (StatusCode, String)> {
     let (password_hash, salt) = salted_hash(params.password.as_str())
