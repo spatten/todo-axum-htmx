@@ -4,8 +4,8 @@ mod templates;
 
 #[derive(Debug, Clone)]
 struct User {
-    id: i32,
+    id: Option<i32>,
     email: String,
-    hashed_password: String,
+    password_hash: String,
     salt: String,
 }
