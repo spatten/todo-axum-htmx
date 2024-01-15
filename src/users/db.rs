@@ -5,20 +5,21 @@ use crate::{users::model::User, utils};
 
 use super::{model::salted_hash, templates::UserForm};
 
-pub async fn create(params: UserForm, pool: &PgPool) -> Result<(), (StatusCode, String)> {
+pub async fn create(params: UserForm, pool: &PgPool) -> Result<User, (StatusCode, String)> {
     let (password_hash, salt) = salted_hash(params.password.as_str())
         .map_err(|_| utils::internal_error_from_string("error while hashing password"))?;
-    sqlx::query!(
-        "INSERT INTO users (email, password_hash, salt) VALUES ($1,$2,$3);",
+    let user = sqlx::query_as!(
+        User,
+        "INSERT INTO users (email, password_hash, salt) VALUES ($1,$2,$3) returning id, email, password_hash, salt;",
         params.email,
         password_hash,
         salt
     )
-    .execute(pool)
+    .fetch_one(pool)
     .await
     .map_err(utils::internal_error)?;
 
-    Ok(())
+    Ok(user)
 }
 
 pub async fn find_by_email(
