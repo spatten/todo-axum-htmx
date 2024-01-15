@@ -2,6 +2,7 @@ use todo_axum_htmx::app;
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
     let app = app::app().await;
     let listener = app::listener().await;
 

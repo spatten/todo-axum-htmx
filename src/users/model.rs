@@ -3,13 +3,14 @@ use data_encoding::HEXUPPER;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
 use sqlx::PgPool;
+use std::env;
 use std::num::NonZeroU32;
 use tower_cookies::cookie::SameSite;
 use tower_cookies::cookie::{
     time::{Duration, OffsetDateTime},
     Key,
 };
-use tower_cookies::{Cookie, CookieManagerLayer, Cookies};
+use tower_cookies::{Cookie, Cookies};
 
 use crate::utils;
 
@@ -81,16 +82,14 @@ impl User {
         let Some(id) = self.id else {
             return Err(utils::internal_error_from_string("user has no ID"));
         };
-        // generated with `Key::generate()` and then printed with `HEXUPPER.encode(key.master())`
+        // key is generated with `Key::generate()` and then printed with `HEXUPPER.encode(key.master())`
         // let key = Key::generate();
-        // prinln!("Key: '{:?}'", HEXUPPER.encode(key.master()));
-        // let key = Key::from(&[
-        //     30, 93, 127, 174, 100, 98, 218, 101, 171, 145, 32, 39, 254, 146, 254, 248, 21, 237, 27,
-        //     211, 102, 103, 241, 58, 190, 0, 104, 227, 76, 96, 105, 207, 35, 211, 58, 19, 179, 130,
-        //     153, 250, 179, 195, 44, 51, 243, 60, 4, 0, 127, 208, 90, 102, 28, 20, 169, 169, 142, 5,
-        //     39, 56, 152, 72, 193, 189,
-        // ]);
-        let key = HEXUPPER.decode("1E5D7FAE6462DA65AB912027FE92FEF815ED1BD36667F13ABE0068E34C6069CF23D33A13B38299FAB3C32C33F33C04007FD05A661C14A9A98E0527389848C1BD".as_bytes()).map_err(utils::internal_error)?;
+        // println!("Key: '{:?}'", HEXUPPER.encode(key.master()));
+        // in dev, set this in the .env file. In production, set it via a normal environment variable
+        let key = env::var("COOKIE_ENCRYPTION_KEY").map_err(utils::internal_error)?;
+        let key = HEXUPPER
+            .decode(key.as_bytes())
+            .map_err(utils::internal_error)?;
         let key = Key::from(&key);
         println!("key: '{:?}'", HEXUPPER.encode(key.master()));
         let private = cookies.private(&key);
@@ -106,7 +105,7 @@ impl User {
             .http_only(true)
             .into();
         private.add(cookie);
-        println!("logged in. Redirecting to /");
+        println!("logged in!");
 
         Ok(())
     }
