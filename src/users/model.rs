@@ -52,8 +52,6 @@ pub fn salted_hash(password: &str) -> Result<(String, String), ring::error::Unsp
         password.as_bytes(),
         &mut pbkdf2_hash,
     );
-    println!("Salt: {}", HEXUPPER.encode(&salt));
-    println!("PBKDF2 hash: {}", HEXUPPER.encode(&pbkdf2_hash));
     Ok((HEXUPPER.encode(&pbkdf2_hash), HEXUPPER.encode(&salt)))
 }
 
@@ -75,7 +73,6 @@ impl User {
 
     // Set login cookie
     pub fn set_cookie(&self, cookies: Cookies) -> Result<(), (StatusCode, String)> {
-        println!("start of set cookie");
         // Build the cookie, and make it private
         let password_slice = self.password_hash.get(0..29);
         let Some(password_slice) = password_slice else {
@@ -93,7 +90,6 @@ impl User {
             .decode(key.as_bytes())
             .map_err(utils::internal_error)?;
         let key = Key::from(&key);
-        println!("key: '{:?}'", HEXUPPER.encode(key.master()));
         let private = cookies.private(&key);
         let user_key = format!("{}----{}", id, password_slice);
         let now = OffsetDateTime::now_utc();
@@ -107,7 +103,6 @@ impl User {
             .http_only(true)
             .into();
         private.add(cookie);
-        println!("logged in!");
 
         Ok(())
     }

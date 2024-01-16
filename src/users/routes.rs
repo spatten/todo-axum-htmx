@@ -34,19 +34,14 @@ async fn create(
     Form(form): Form<UserForm>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     // validations
-    println!("User create start");
     let validated_form = form.validate(&pool).await?;
     if !validated_form.is_valid() {
-        println!("user form is not valid!\n{:?}", validated_form);
         return Ok(HtmlTemplate(validated_form).into_response());
     }
 
-    // create
-    println!("about to create user");
+    // create and login
     let user = db::create(validated_form, &pool).await?;
-    println!("user created!");
     user.set_cookie(cookies)?;
-    println!("cookie set!");
 
     // redirect
     Ok(Redirect::to("/").into_response())
