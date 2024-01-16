@@ -1,6 +1,7 @@
 use askama::Template;
 
 pub mod app;
+pub mod sessions;
 pub mod todos;
 pub mod users;
 pub mod utils;
