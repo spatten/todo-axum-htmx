@@ -1,5 +1,3 @@
-use std::env;
-
 use axum::{
     extract::State,
     http::StatusCode,
@@ -8,14 +6,10 @@ use axum::{
     Router,
 };
 use axum_extra::extract::Form;
-use data_encoding::HEXUPPER;
 use sqlx::{PgPool, Pool, Postgres};
-use tower_cookies::{cookie::SameSite, Cookie, CookieManagerLayer, Cookies, Key};
+use tower_cookies::{cookie::SameSite, Cookie, CookieManagerLayer, Cookies};
 
-use crate::{
-    utils::{self, HtmlTemplate},
-    SESSION_COOKIE_NAME,
-};
+use crate::{utils::HtmlTemplate, SESSION_COOKIE_NAME};
 
 use super::templates::{self, LoginForm};
 
@@ -48,20 +42,13 @@ async fn create(
 }
 
 async fn logout(cookies: Cookies) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let key = env::var("COOKIE_ENCRYPTION_KEY").map_err(utils::internal_error)?;
-    let key = HEXUPPER
-        .decode(key.as_bytes())
-        .map_err(utils::internal_error)?;
-    let key = Key::from(&key);
-    let private = cookies.private(&key);
-
     let cookie = Cookie::build((SESSION_COOKIE_NAME, ""))
         .path("/")
         .secure(true)
         .same_site(SameSite::Strict)
         .http_only(true)
         .into();
-    private.remove(cookie);
+    cookies.remove(cookie);
 
     Ok(Redirect::to("/sessions/new").into_response())
 }
