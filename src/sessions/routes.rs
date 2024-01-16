@@ -7,7 +7,7 @@ use axum::{
 };
 use axum_extra::extract::Form;
 use sqlx::{PgPool, Pool, Postgres};
-use tower_cookies::CookieManagerLayer;
+use tower_cookies::{CookieManagerLayer, Cookies};
 
 use crate::utils::HtmlTemplate;
 
@@ -28,14 +28,15 @@ async fn new() -> Result<impl IntoResponse, (StatusCode, String)> {
 }
 
 async fn create(
+    cookies: Cookies,
     State(pool): State<PgPool>,
     Form(form): Form<LoginForm>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let (user, validated_form) = form.attempt_login(&pool).await?;
-    println!("user after attempt_login: {:?}", user);
-    if user.is_none() {
+    let Some(user) = user else {
         return Ok(HtmlTemplate(validated_form).into_response());
-    }
+    };
+    user.set_cookie(cookies)?;
 
     Ok(Redirect::to("/").into_response())
 }
