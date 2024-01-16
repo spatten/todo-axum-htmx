@@ -54,19 +54,21 @@ pub fn salted_hash(password: &str) -> Result<(String, String), ring::error::Unsp
     );
     println!("Salt: {}", HEXUPPER.encode(&salt));
     println!("PBKDF2 hash: {}", HEXUPPER.encode(&pbkdf2_hash));
-    Ok((HEXUPPER.encode(&salt), HEXUPPER.encode(&pbkdf2_hash)))
+    Ok((HEXUPPER.encode(&pbkdf2_hash), HEXUPPER.encode(&salt)))
 }
 
 impl User {
     // Authenticate the given user model with the password
     pub fn authenticate(&self, password: &str) -> bool {
+        let decoded_salt = HEXUPPER.decode(self.salt.as_bytes()).unwrap();
+        let decoded_password = HEXUPPER.decode(self.password_hash.as_bytes()).unwrap();
         let n_iter = NonZeroU32::new(100_000).unwrap();
         pbkdf2::verify(
             pbkdf2::PBKDF2_HMAC_SHA512,
             n_iter,
-            self.salt.as_bytes(),
+            &decoded_salt,
             password.as_bytes(),
-            self.password_hash.as_bytes(),
+            &decoded_password,
         )
         .is_ok()
     }

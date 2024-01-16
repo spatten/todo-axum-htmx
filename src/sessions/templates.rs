@@ -1,6 +1,8 @@
-use crate::BaseTemplate;
+use crate::{users::model::User, BaseTemplate};
 use askama::Template;
+use axum::http::StatusCode;
 use serde::Deserialize;
+use sqlx::PgPool;
 
 #[derive(Template)]
 #[template(path = "login.html")]
@@ -26,4 +28,27 @@ pub struct LoginForm {
     pub email_errors: String,
     #[serde(default)]
     pub password_errors: String,
+}
+
+impl LoginForm {
+    pub async fn attempt_login(
+        mut self,
+        pool: &PgPool,
+    ) -> Result<(Option<User>, Self), (StatusCode, String)> {
+        let user = crate::users::db::find_by_email(self.email.clone(), pool).await?;
+        println!("user: {:?}", user);
+        let Some(user) = user else {
+            self.email_errors = "No user found for that email/password combination".to_string();
+            return Ok((None, self));
+        };
+
+        if user.authenticate(&self.password) {
+            println!("good password! {}", &self.password);
+            return Ok((Some(user), self));
+        }
+        println!("bad password! {}", &self.password);
+
+        self.email_errors = "No user found for that email/password combination".to_string();
+        Ok((None, self))
+    }
 }
