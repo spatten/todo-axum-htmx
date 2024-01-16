@@ -12,12 +12,10 @@ use tower_cookies::cookie::{
 };
 use tower_cookies::{Cookie, Cookies};
 
-use crate::utils;
+use crate::{utils, SESSION_COOKIE_NAME};
 
 use super::db;
 use super::templates::UserForm;
-
-static COOKIE_NAME: &str = "SESSION";
 
 #[derive(Debug, Clone, Default)]
 pub struct User {
@@ -95,7 +93,7 @@ impl User {
         let now = OffsetDateTime::now_utc();
         let three_months = Duration::days(90);
 
-        let cookie = Cookie::build((COOKIE_NAME, user_key))
+        let cookie = Cookie::build((SESSION_COOKIE_NAME, user_key))
             .path("/")
             .secure(true)
             .expires(now + three_months)
