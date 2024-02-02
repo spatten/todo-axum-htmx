@@ -1,0 +1,9 @@
+<title>Create an account</title>
+<form hx-post="/users/new" method="post">
+  <label>Email: <input type="email" name="email" placeholder="you@domain.com" value="{{ email }}"/></label>
+  <div class="error">{{ email_errors }}</div>
+  <label>Password: <input type="password" name="password" /></label>
+  <div class="error">{{ password_errors }}</div>
+  <label>Confirm Password: <input type="password" name="password_confirmation" /></label>
+  <input type="submit" value="Create!" />
+</form>

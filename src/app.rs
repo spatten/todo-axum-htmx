@@ -7,13 +7,13 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::todos;
+use crate::{sessions, todos, users};
 
-pub async fn app() -> Router {
+pub async fn app(database_url: &str) -> Router {
     // Connect to postgres
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://localhost/todo-axum-htmx")
+        .connect(database_url)
         .await
         .expect("should be able to connect to DB");
     let row: (i64,) = sqlx::query_as("SELECT $1")
@@ -36,6 +36,8 @@ pub async fn app() -> Router {
     Router::new()
         .route("/", get(todos::routes::index))
         .nest("/todos", todos::routes::routes(&pool))
+        .nest("/users", users::routes::routes(&pool))
+        .nest("/sessions", sessions::routes::routes(&pool))
         .fallback_service(serve_dir)
         .layer(TraceLayer::new_for_http())
 }

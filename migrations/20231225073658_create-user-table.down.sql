@@ -1,0 +1,2 @@
+DROP TABLE users;
+ALTER TABLE todos DROP COLUMN user_id;
