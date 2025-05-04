@@ -5,3 +5,7 @@ watch:
 
 db:
 	psql todo-axum-htmx
+
+# generate the sqlx queries
+prepare-sqlx:
+	cargo sqlx prepare
