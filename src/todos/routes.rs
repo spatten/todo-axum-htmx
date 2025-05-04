@@ -39,7 +39,7 @@ async fn create(
     Form(params): Form<TodoCreateParams>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     sqlx::query!(
-        "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1));",
+        "INSERT INTO todos (description,position) VALUES ($1,(SELECT COALESCE(NULL, max(position)+1, 0) from todos));",
         params.description,
     )
     .execute(&pool)
