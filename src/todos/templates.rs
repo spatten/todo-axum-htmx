@@ -1,5 +1,7 @@
 use std::fmt::{self};
 
+use crate::BaseTemplate;
+
 use super::{db, Todo};
 use askama::Template;
 use axum::http::StatusCode;
@@ -22,10 +24,6 @@ impl fmt::Display for TodoUiState {
         Ok(())
     }
 }
-#[derive(Template)]
-#[template(path = "base.html")]
-struct BaseTemplate {}
-
 #[derive(Template)]
 #[template(path = "todos_index.html")]
 pub struct TodosIndexTemplate<'a> {

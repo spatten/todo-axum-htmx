@@ -30,3 +30,7 @@ where
 {
     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
+
+pub fn internal_error_from_string(msg: &str) -> (StatusCode, String) {
+    (StatusCode::INTERNAL_SERVER_ERROR, msg.to_string())
+}

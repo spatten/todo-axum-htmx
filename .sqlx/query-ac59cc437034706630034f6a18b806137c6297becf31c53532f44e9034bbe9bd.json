@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO todos (description,position) VALUES ($1,(SELECT COALESCE(NULL, max(position)+1, 0) from todos));",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ac59cc437034706630034f6a18b806137c6297becf31c53532f44e9034bbe9bd"
+}

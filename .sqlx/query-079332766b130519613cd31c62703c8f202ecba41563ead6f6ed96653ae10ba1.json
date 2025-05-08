@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO todos (description,position) VALUES ($1,((select max(position) from todos) + 1)) returning id, done, description, position;",
+  "query": "select * from users where email = $1",
   "describe": {
     "columns": [
       {
@@ -10,18 +10,18 @@
       },
       {
         "ordinal": 1,
-        "name": "done",
-        "type_info": "Bool"
+        "name": "email",
+        "type_info": "Varchar"
       },
       {
         "ordinal": 2,
-        "name": "description",
-        "type_info": "Text"
+        "name": "password_hash",
+        "type_info": "Bpchar"
       },
       {
         "ordinal": 3,
-        "name": "position",
-        "type_info": "Float4"
+        "name": "salt",
+        "type_info": "Bpchar"
       }
     ],
     "parameters": {
@@ -36,5 +36,5 @@
       false
     ]
   },
-  "hash": "229ac3c3c98063d8bce096a3f1de73f1c6fce0e857a1daed9acc3423cc2c200f"
+  "hash": "079332766b130519613cd31c62703c8f202ecba41563ead6f6ed96653ae10ba1"
 }
